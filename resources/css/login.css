@@ -1,0 +1,458 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.loginContainer {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+.loginContainer .grid {
+    flex: 3;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+.loginContainer .grid::before {
+    --size: 45px;
+  --line: color-mix(in lch, canvasText, transparent 85%);
+  content: '';
+  height: 100%;
+  width: 100%;
+  position: fixed;
+  background: linear-gradient(
+        90deg,
+        var(--line) 1px,
+        transparent 1px var(--size)
+      )
+      50% 50% / var(--size) var(--size),
+    linear-gradient(var(--line) 1px, transparent 1px var(--size)) 50% 50% /
+      var(--size) var(--size);
+  mask: linear-gradient(20deg, transparent 30%, white);
+  
+  transform-style: flat;
+  pointer-events: none;
+  z-index: -1;
+}
+.loginContainer .bottom {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    background-color: lightblue;
+    position: fixed;
+    top: 75%;
+    
+}
+
+.loginContainer .header {
+    position: fixed;
+    padding: 10px 20px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    max-width: 1350px;
+    width: 100%;
+    left: 0;
+    right: 0;
+    margin: auto;
+    background-color: transparent;
+}
+
+.loginContainer .header .logo {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.loginContainer .header .description {
+    font-size: 13px;
+    color: grey;
+    margin-top: 3px;
+}
+
+.loginContainer .hero {
+    position: absolute;
+    top: 80px;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    max-width: 1300px;
+    margin: 0 auto;
+    left: 0;
+    right: 0;
+    bottom: 20px;
+    box-sizing: border-box;
+    padding: 0 20px;
+    
+}
+@media screen and (max-width: 700px) {
+    .loginContainer .hero {
+        overflow-y: scroll;
+        padding-bottom: 70px;
+
+    }
+
+}
+
+.loginContainer .hero .info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding-inline: 20px;
+}
+.loginContainer .hero .info .title {
+    font-size: 30px;
+    font-weight: 700;
+    max-width: 400px;
+    
+}
+.loginContainer.hero .info .description {
+    color: grey;
+    font-size: 16px;
+    max-width: 250px;
+    margin-top: 20px;
+}
+.loginContainer .hero .info .lottie {
+    align-self: flex-end;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.loginContainer .hero .info .lottie .lottieItem {
+    transform: scale(1.3) translateX(-40px);
+}
+
+
+
+.loginContainer .hero .login {
+    flex: 1;
+    box-shadow: 0 0 20px #a7a7a78a;
+    height: 500px;
+    padding: 20px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    max-width: 500px;
+    width: 100%;
+    align-self: center;
+}
+
+.loginContainer1 .hero .login .info {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-around;
+}
+
+.loginContainer .hero .login .info .title {
+    font-weight: 600;
+    font-size: 22px;
+    text-align: left;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    
+}
+.loginContainer .hero .login  .info  .description {
+    color: grey;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+.loginContainer .hero .login  .info .form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.loginContainer .hero .login .info .label {
+    font-weight: 500;
+    font-size: 14px;
+}
+.loginInput {
+    border: 1px solid #e2e2e2;
+    border-radius: 5px;
+    height: 30px;
+    width: 100%;
+    outline: none;
+    padding: 0px 5px;
+    font-size: 14px;
+}
+.errors {
+    color: #e70000;
+    margin-top: 15px;
+    font-size: 14px;
+}
+.loginButton {
+    border: 2px black solid;
+    width: 100px;
+    text-align: center;
+    border-radius: 5px;
+    color: black;
+    font-size: 13px;
+    padding: 2px 5px;
+    box-sizing: border-box;
+    margin-top: 20px;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+    
+
+    position: relative;
+    overflow: hidden!important;
+    -webkit-transition: all .3s ease-in-out;
+    -moz-transition: all .3s ease-in-out;
+    -o-transition: all .3s ease-in-out;
+    transition: all .3s ease-in-out;
+    background: transparent!important;
+    z-index:10;
+    &:hover {
+        color: white;
+    }
+    @media screen and (width < 440px) {
+        width: 95px;
+        font-size: 12px;
+    }
+}
+.loginButton:hover {
+    color: white;
+}
+
+
+
+
+.loginButton::before {
+    content: '';
+    width: 0%;
+    height: 100%;
+    display: block;
+    background: black;
+    position: absolute;
+      -ms-transform: skewX(-20deg);
+    -webkit-transform: skewX(-20deg); 
+    transform: skewX(-20deg);   
+    left: -10%;
+    opacity: 1;
+    top: 0;
+    z-index: -12;
+    -moz-transition: all .7s cubic-bezier(0.77, 0, 0.175, 1);
+  -o-transition: all .7s cubic-bezier(0.77, 0, 0.175, 1);
+  -webkit-transition: all .7s cubic-bezier(0.77, 0, 0.175, 1);
+  transition: all .7s cubic-bezier(0.77, 0, 0.175, 1);
+       box-shadow:2px 0px 14px rgba(0,0,0,.6);
+  } 
+
+.loginButton::after {
+    content: '';
+    width: 0%;
+    height: 100%;
+    display: block;
+    background: #3e4f7e;
+    position: absolute;
+    -ms-transform: skewX(-20deg);
+    -webkit-transform: skewX(-20deg); 
+    transform: skewX(-20deg);   
+    left: -10%;
+    opacity: 0;
+    top: 0;
+    z-index: -15;
+    -webkit-transition: all .94s cubic-bezier(.2,.95,.57,.99);
+    -moz-transition: all .4s cubic-bezier(.2,.95,.57,.99);
+    -o-transition: all .4s cubic-bezier(.2,.95,.57,.99);
+    transition: all .4s cubic-bezier(.2,.95,.57,.99);
+    box-shadow: 2px 0px 14px rgba(0,0,0,.6);
+}
+.loginButton:hover::before{
+    opacity:1;
+    width: 116%;
+}
+.loginButton:hover::after{
+    opacity:1;
+    width: 120%;
+}
+
+@media screen and (max-width: 700px) {
+
+
+.loginContainer .hero {
+    flex-direction: column;
+    
+}
+.loginContainer .hero .info {
+    align-items: center;
+    text-align: center;
+
+
+}
+.loginContainer .hero .info .title {
+    max-width: 100%;
+}
+.loginContainer .hero .info .description {
+    max-width: 100%;
+}
+.loginContainer .hero .info .lottie .lottieItem{
+    transform: translateX(0);
+}
+
+
+.loginContainer .hero .login {
+    flex: 1;
+    height: 100%;
+    max-height: 100%;
+}
+
+}
+.pagination {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .page-item {
+    display: flex;
+    margin: 0 3px;
+    background-color: #e3e3e3a8;
+    height: 40px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    font-size: 13px;
+    overflow: hidden;
+    
+  }
+  
+  .page-link {
+    padding: 8px 16px;
+    text-decoration: none;
+    color: rgb(87, 87, 87);
+  }
+  
+  .active .page-link {
+    font-weight: bold;
+    color: white;
+    background-color: #002a69;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .disabled .page-link {
+    color: grey;
+    cursor: not-allowed;
+  }
+  
+  .prev-item, .next-item {
+    margin: 0 15px;
+    display: flex;
+    background-color: #e3e3e3a8;
+    height: 40px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    font-size: 13px;
+    overflow: hidden;
+    width: 37px;
+    
+  }
+  
+  .break-me {
+    margin: 0 5px;
+  }
+  
+  .break-link {
+    padding: 8px 16px;
+    text-decoration: none;
+    color: grey;
+  }
+
+.loginContainer .hero .entities {
+    flex: 1;
+    padding: 20px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: scroll;
+    max-width: 500px;
+}
+
+@media screen and (max-width: 700px) {
+    .loginContainer .hero .entities {
+        
+        overflow-y: unset;
+        padding-bottom: 70px;
+        max-width: unset;
+
+
+    }
+}
+.loginContainer .hero .entities .entity {
+    background-color: white;
+    box-shadow: 0 0 20px #a7a7a78a;
+    padding: 25px 20px;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    
+}
+.loginContainer .hero .entities .entityTitle {
+    font-size: 17px;
+    font-weight: 600;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2; /* Number of lines to display */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.loginContainer .hero .entities .entityDescription {
+    color: grey;
+    font-size: 14px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3; /* Number of lines to display */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.loginContainer .hero .entities .entityButton {
+    border: 2px black solid;
+    width: 100px;
+    text-align: center;
+    border-radius: 5px;
+    color: black;
+    font-size: 13px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    margin-top: 5px;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+
+    position: relative;
+    overflow: hidden!important;
+    -webkit-transition: all .3s ease-in-out;
+    -moz-transition: all .3s ease-in-out;
+    -o-transition: all .3s ease-in-out;
+    transition: all .3s ease-in-out;
+    background: transparent!important;
+    z-index:10;
+    
+    @media screen and (width < 440px) {
+        width: 95px;
+        font-size: 12px;
+    }
+}
+
+

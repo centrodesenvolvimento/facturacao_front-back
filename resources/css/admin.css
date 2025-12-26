@@ -1,0 +1,382 @@
+.adminHeader1 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    z-index: 8;
+    left: 215px;
+    right: 0;
+    top: 0;
+    position: fixed;
+    background-color: white;
+    border-bottom: 2px solid #eeeeee;
+    border-top-left-radius: 0;
+    
+}
+.adminHeader {
+    display: flex;
+    flex-direction: row;
+    padding: 2px 20px;
+    max-width: 1900px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* background-color: #f5f5f5; */
+    border-top-left-radius: 0;
+    
+
+
+}
+@media screen and (max-width: 695px) {
+    .adminHeader1 {
+        left: 0px;
+        border-top-left-radius: 0;
+    }
+    .adminHeader {
+        border-top-left-radius: 0;
+    }
+}
+.adminHeader > .header {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    z-index: 100;
+    width: 100%;
+}
+
+.adminHeader > .header > .logo {
+    font-size: 18px;
+    font-weight: 700;
+    
+}
+.adminHeader > .header > .description {
+    font-size: 13px;
+    color: grey;
+    margin-top: 3px;
+}
+@media screen and (max-width: 360px) {
+    .adminHeader > .header > .description {
+        display: none;
+    }
+}
+.adminHeader .logoContainer {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    .logoText {
+        margin: 0;
+    }
+}
+.adminHeader .profilepic {
+    background-color: #d3eaff;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    border-radius: 500px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+
+}
+.profilePop {
+    margin-right: 10px;
+    width: 250px;
+    padding: 15px 0;
+    color: black;
+}
+
+.profilePop .username {
+    font-size: 14.5px;
+    padding: 0 15px;
+}
+
+.profilePop .email {
+    font-size: 13px;
+    color: grey;
+    margin-top: -3px;
+    padding: 0 15px;
+}
+
+.profilePop .option {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    padding: 5px 10px;
+    margin: 0 5px;
+    border-radius: 3px;
+    cursor: pointer;
+    color: black;
+}
+
+.profilePop .option:hover {
+    background-color: #f3f3f3;
+}
+
+.profilePop .option svg {
+    width: 15px;
+    height: 15px;
+}
+
+.profilePop .title {
+    font-size: 13px;
+    padding: 0 15px;
+    margin-top: 10px;
+    font-weight: 500;
+}
+
+.profilePop .profile {
+    padding: 5px 10px;
+    margin: 0 5px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: pointer;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.profilePop .profile:hover {
+    background-color: #f3f3f3;
+}
+
+.profilePop .profile .name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1; /* Number of lines to display */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+}
+
+.profilePop .profile .profilePic {
+    background-color: #d3eaff;
+    width: 30px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    border-radius: 500px;
+    font-size: 13px;
+    font-weight: 500;
+}
+.profileSheet {
+    max-width: 450px;
+    width: 100%;
+    overflow-y: scroll;
+}
+
+.profileSheet .profileHeader {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding-inline: 20px;
+}
+
+.profileSheet .profileHeader .profilepic {
+    background-color: #d3eaff;
+    width: 75px;
+    height: 75px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    border-radius: 500px;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.profileSheet .profileHeader .profileName {
+    font-weight: 500;
+    font-size: 17px;
+}
+
+.profileSheet .section {
+    margin: 20px 0;
+    padding-top: 5px;
+    border-top: 1px solid #dfdfdf;
+    padding-inline: 20px;
+}
+
+.profileSheet .sectionHeader {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+}
+
+.profileSheet .sectionHeader svg {
+    width: 15px;
+    height: 15px;
+}
+
+.profileSheet .form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.profileSheet .label {
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.profileSheet .loginInput {
+    border: 1px solid #e2e2e2;
+    border-radius: 5px;
+    height: 35px;
+    width: 100%;
+    outline: none;
+    padding: 5px;
+    font-size: 14px;
+}
+
+.profileSheet .inputRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.profileSheet .inputRow svg {
+    height: 35px;
+    width: 35px;
+    margin-left: 5px;
+    cursor: pointer;
+    background-color: #e2e2e2;
+    padding: 8px;
+    border-radius: 5px;
+    color: grey;
+}
+
+.profileSheet .inputRow svg:hover {
+    color: black;
+}
+
+.profileSheet .buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    margin-left: 5px;
+    font-size: 14px;
+}
+
+.profileSheet .cancel {
+    color: grey;
+    cursor: pointer;
+}
+
+.profileSheet .cancel:hover {
+    color: black;
+}
+
+.profileSheet .save {
+    background-color: black;
+    padding: 2px 7px;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.profileSheet .save:hover {
+    opacity: 0.8;
+}
+
+.profileSheet .passwordButtons {
+    display: flex;
+    flex-direction: row;
+    margin-top: 15px;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.profileSheet .passwordButtons div:first-child {
+    border: 1px solid black;
+    border-radius: 5px;
+}
+
+.profileSheet .passwordButtons div {
+    flex: 1;
+    text-align: center;
+    padding: 5px;
+}
+
+.profileSheet .loginButton {
+    margin-top: 20px;
+    background-color: #00183d;
+    width: 100px;
+    text-align: center;
+    color: white;
+    height: 33px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.profileSheet .errors {
+    color: #e70000;
+    margin-top: 15px;
+    font-size: 14px;
+}
+.preAdminBody {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    margin-left: auto;
+    margin-right: auto;
+    top: 0;
+    left: 0;
+    right: 0;
+    position: fixed;
+    height: 100%;
+    padding-top: 45px;
+    background-color: white;
+
+
+}
+.adminBody {
+    max-width: 2125px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    margin-left: auto;
+    margin-right: auto;
+    top: 0;
+    left: 0;
+    right: 0;
+    position: fixed;
+    height: 100%;
+    padding-top: 45px;
+    background-color: #00183d;
+    
+}
+
+.adminBody .body {
+    width: 100%;
+    height: 100%;
+    margin-left: 215px;
+    overflow-y: scroll;
+    border-bottom-left-radius: 0;
+    background-color: white;
+}
+
+/* Media query for screens narrower than 695px */
+@media screen and (max-width: 695px) {
+    .adminBody .body {
+        margin-left: 0;
+        border-bottom-left-radius: 0;
+
+    }
+}
+
