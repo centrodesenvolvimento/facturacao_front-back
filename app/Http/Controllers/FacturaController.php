@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Factura;
 use App\Http\Controllers\Controller;
-use App\Modelos\Artigo;
-use App\Modelos\Categoria;
-use App\Modelos\Clientes;
-use App\Modelos\Polo;
+use App\Models\Artigo;
+use App\Models\Categoria;
+use App\Models\Clientes;
+use App\Models\Polo;
 use App\NotaCredito;
 use BaconQrCode\Renderer\Image\EpsImageBackEnd;
 use BaconQrCode\Renderer\Image\ImagickImageBackEnd;

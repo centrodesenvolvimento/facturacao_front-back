@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Modelos\Empresa;
+use App\Models\Empresa;
 use App\Publicacao;
 use App\SubPublicacoes;
 use Illuminate\Http\Request;

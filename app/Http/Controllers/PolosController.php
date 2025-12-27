@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Modelos\Polo;
+use App\Models\Polo;
 use Illuminate\Http\Request;
 
 class PolosController extends Controller

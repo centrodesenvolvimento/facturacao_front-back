@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
-use App\Modelos\Familia;
-use App\Modelos\Categoria;
-use App\Modelos\Artigo;
+use App\Models\Familia;
+use App\Models\Categoria;
+use App\Models\Artigo;
 
 class ArtigosController extends Controller
 {

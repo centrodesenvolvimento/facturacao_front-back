@@ -6,7 +6,7 @@ use App\AssinaturasFolha;
 use App\Cargo;
 use App\ContractoCategoria;
 use App\Departamentos;
-use App\Modelos\Empresa;
+use App\Models\Empresa;
 use App\Nivel;
 use App\Premio;
 use App\Publicacao;

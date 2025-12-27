@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\ControlePresenca;
 use App\Departamentos;
 use App\FolhaSalarial;
-use App\Modelos\Polo;
+use App\Models\Polo;
 use App\VinculosLaborais;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;

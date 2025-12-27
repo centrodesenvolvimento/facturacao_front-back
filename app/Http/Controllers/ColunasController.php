@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Colunas;
-use App\Modelos\Empresa;
+use App\Models\Empresa;
 use Illuminate\Http\Request;
 
 class ColunasController extends Controller

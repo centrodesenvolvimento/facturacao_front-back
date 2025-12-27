@@ -2,7 +2,7 @@
 
 namespace App;
 
-use App\Modelos\Empresa;
+use App\Models\Empresa;
 use Illuminate\Database\Eloquent\Model;
 
 class Funcionario extends Model

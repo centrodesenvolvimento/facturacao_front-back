@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\BaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
-use App\Modelos\Empresa;
+use App\Models\Empresa;
 
 class EmpresasController extends BaseController
 {

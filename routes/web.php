@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\Auth\AuthApiController;
 use App\Http\Controllers\Api\UserApiController;
+use App\Http\Controllers\EmpresasController;
+use App\Http\Controllers\FacturaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('login', [AuthApiController::class, 'showLoginForm'])
@@ -38,6 +40,30 @@ Route::prefix('v1')
         Route::delete('usuarios/apagar/{id}/{id_user_logado}', [UserApiController::class, 'destroy']);
         Route::post('usuarios/updateTipoFolha', [UserApiController::class, 'updateTipoFolha']);
         Route::post('updateUser/{field}/{id}', [AuthApiController::class, 'updateUser'])->withoutMiddleware('auth')
-        ->name('v1.updateUser');
+            ->name('v1.updateUser');
 
+
+        // EMPRESA
+        Route::group(['prefix' => 'empresas'], function () {
+            Route::get('/', [EmpresasController::class, 'all']);
+            Route::post('store', [EmpresasController::class, 'store']);
+            Route::post('edit/{id}', [EmpresasController::class, 'edit']);
+
+        });
+
+        // FACTURAS
+        Route::group(['prefix' => 'facturas'], function () {
+            // Route::get('/', [ColunasController::class, 'all']);
+            Route::get('', [FacturaController::class, 'facturasFilter']);
+            Route::get('stats', [FacturaController::class, 'facturasStats']);
+
+            Route::post('store/', [FacturaController::class, 'store']);
+            Route::post('edit/{id}', [FacturaController::class, 'edit']);
+
+            Route::get('searchSaft', [FacturaController::class, 'searchSaft']);
+
+            Route::get('factura/{id}', [FacturaController::class, 'getFactura']);
+
+
+        });
     });

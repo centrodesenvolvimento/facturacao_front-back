@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\AssinaturasFolha;
-use App\Modelos\Empresa;
+use App\Models\Empresa;
 use Illuminate\Http\Request;
 
 class AssinaturasFolhaController extends Controller

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Departamentos;
-use App\Modelos\Empresa;
-use App\Modelos\Polo;
+use App\Models\Empresa;
+use App\Models\Polo;
 use App\Transacao;
 use Illuminate\Http\Request;
 

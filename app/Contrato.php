@@ -2,7 +2,7 @@
 
 namespace App;
 
-use App\Modelos\Polo;
+use App\Models\Polo;
 use Illuminate\Database\Eloquent\Model;
 use App\Departamentos;
 

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\ContractoCategoria;
-use App\Modelos\Empresa;
+use App\Models\Empresa;
 use Illuminate\Http\Request;
 
 class ContractoCategoriaController extends Controller

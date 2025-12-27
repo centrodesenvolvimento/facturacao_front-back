@@ -3,8 +3,8 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Modelos\Polo;
-use App\Modelos\Clientes;
+use App\Models\Polo;
+use App\Models\Clientes;
 
 
 class Factura extends Model

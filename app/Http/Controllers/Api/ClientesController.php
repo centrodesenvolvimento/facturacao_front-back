@@ -7,19 +7,19 @@ use App\Http\Controllers\Api\BaseController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use App\Modelos\Clientes;
-use App\Modelos\Contacto;
+use App\Models\Clientes;
+use App\Models\Contacto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
 class ClientesController extends BaseController
 {
-    protected $modelos_contato;
+    protected $Models_contato;
     public function __construct()
     {
         parent::__construct(Clientes::class);
-        $this->modelos_contato = new Contacto();
-        $this->modelos_clientes = new Clientes();
+        $this->Models_contato = new Contacto();
+        $this->Models_clientes = new Clientes();
     }
     /**
      * Display a listing of the resource.
@@ -62,7 +62,7 @@ class ClientesController extends BaseController
                 ], 422);
             else:
             
-                $t = $this->modelos_clientes->insertGetIdCliente($request);
+                $t = $this->Models_clientes->insertGetIdCliente($request);
                 if($t === 'sucesso'):
                     return response()->json([
                         "message" => "Usuario registado com sucesso",

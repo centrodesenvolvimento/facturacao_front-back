@@ -10,7 +10,7 @@ use App\Departamentos;
 use App\Ferias;
 use App\FolhaSalarial;
 use App\Funcionario;
-use App\Modelos\Polo;
+use App\Models\Polo;
 use App\Nivel;
 use App\Premio;
 use App\SubsidioValor;

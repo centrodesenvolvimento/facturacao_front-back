@@ -7,9 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use App\Modelos\Empresa;
-use App\Modelos\Isencao;
-use App\Modelos\Polo;
+use App\Models\Empresa;
+use App\Models\Isencao;
+use App\Models\Polo;
 
 class PolosController extends Controller
 {

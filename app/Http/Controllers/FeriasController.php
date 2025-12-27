@@ -6,7 +6,7 @@ use App\Ferias;
 use App\Funcionario;
 use App\Mail\SendMail;
 use App\Mail\SendMailPedido;
-use App\Modelos\Empresa;
+use App\Models\Empresa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
