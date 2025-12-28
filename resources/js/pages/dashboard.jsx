@@ -2,12 +2,22 @@ import { useEffect, useState } from "react";
 import "../../css/dashboard.css";
 import Loading1 from "../components/loading1";
 import api from "../components/api";
+import { format } from "date-fns";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "../components/ui/popover";
 const Dashboard = () => {
     const [load, setLoad] = useState(false);
     const [stats, setStats] = useState(null);
     const formatCurrency = (value) => {
-        if (!value && value !== 0) return "AOA 0";
-        return `AOA ${value.toLocaleString("pt-AO")}`;
+        if (value == null || value === undefined || value === "")
+            return "AOA 0.00";
+        return `AOA ${value.toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        })}`;
     };
     const [searchFilter, setSearchFilter] = useState("");
     const [poloFilter, setPoloFilter] = useState(null);
@@ -15,7 +25,7 @@ const Dashboard = () => {
     const [tipoFilter, setTipoFilter] = useState(null);
     const [monthFilter, setMonthFilter] = useState(null);
     const [typeDateFilter, setTypeDateFilter] = useState("Anual");
-    const [dataRangeFilter, setDataRangeFilter] = useState(null);
+    const [dateRangeFilter, setDateRangeFilter] = useState(null);
     const [empresa, setEmpresa] = useState(null);
     const [loadStats, setLoadStats] = useState(false);
     const [loadEmpresa, setLoadEmpresa] = useState(false);
@@ -182,6 +192,7 @@ const Dashboard = () => {
             list: [],
         },
     ];
+    
     const handleSearchKeyDown = (e) => {
         if (e.key === "Enter") {
             checkFilters();
@@ -196,11 +207,70 @@ const Dashboard = () => {
     };
     const changePage = (page) => {
         setCurrentPage(page);
+        setPage(page);
+
+        const polo = poloFilter || "";
+        const year = yearFilter !== null ? yearFilter ?? "" : "";
+        const month = monthFilter !== null ? monthFilter ?? "" : "";
+        const tipo = tipoFilter !== null ? tipoFilter ?? "" : "";
+
+        setLoadDocumentos(true);
+
+        let apiUrl =
+            `/v1/facturas` +
+            `?polo=${polo}&year=${year}&month=${month}&tipo=${tipo}&page=${page}`;
+
+        const dateRange = dateRangeFilter;
+
+        if (typeDateFilter === "Intervalo") {
+            if (dateRange?.from && dateRange?.to) {
+                apiUrl =
+                    `/v1/facturas` +
+                    `?polo=${polo}` +
+                    `&from=${new Date(dateRange.from).toISOString()}` +
+                    `&to=${new Date(dateRange.to).toISOString()}` +
+                    `&tipo=${tipo}&page=${page}`;
+            } else {
+                setLoadDocumentos(false);
+                return;
+            }
+        }
+        console.log("Fetching page:", page, apiUrl);
+        api
+            .get(apiUrl)
+            .then((response) => {
+                const data = response.data;
+
+                console.trace("response change page", data);
+
+                setDocumentosFun(
+                    data?.data || [],
+                    data?.current_page,
+                    perPage(),
+                    data?.total
+                );
+
+                setResponse(data);
+
+                const pagesArray = Array.from(
+                    { length: data?.total_pages || 0 },
+                    (_, i) => i + 1
+                );
+
+                setPages(pagesArray);
+            })
+            .catch((error) => {
+                console.error("Error fetching data:", error);
+            })
+            .finally(() => {
+                setLoadDocumentos(false);
+            });
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
     const perPage = () => 17;
     const [currentPage, setCurrentPage] = useState(1);
     const [page, setPage] = useState(1);
-    const currentPageNumber = () => currentPage;
     const [loadDocumentos, setLoadDocumentos] = useState(false);
     const [documentos, setDocumentos] = useState([]);
     const [visibleDocumentos, setVisibleDocumentos] = useState([]);
@@ -213,32 +283,32 @@ const Dashboard = () => {
     const [pages, setPages] = useState([]);
     const getPages = () => {
         const totalPages = pages?.length;
-    const current = this.currentPage();
-    const sidePages = 3;
-    const pages1 = [];
+        const current = currentPage;
+        const sidePages = 3;
+        const pages1 = [];
 
-    pages1.push(1);
+        pages1.push(1);
 
-    if (current > sidePages + 2) {
-      pages1.push("...");
-    }
+        if (current > sidePages + 2) {
+            pages1.push("...");
+        }
 
-    const start = Math.max(2, current - sidePages);
-    const end = Math.min(totalPages - 1, current + sidePages);
+        const start = Math.max(2, current - sidePages);
+        const end = Math.min(totalPages - 1, current + sidePages);
 
-    for (let i = start; i <= end; i++) {
-      pages1.push(i);
-    }
+        for (let i = start; i <= end; i++) {
+            pages1.push(i);
+        }
 
-    if (current < totalPages - (sidePages + 1)) {
-      pages1.push("...");
-    }
+        if (current < totalPages - (sidePages + 1)) {
+            pages1.push("...");
+        }
 
-    if (totalPages > 1) {
-      pages1.push(totalPages);
-    }
+        if (totalPages > 1) {
+            pages1.push(totalPages);
+        }
 
-    return pages1;
+        return pages1;
     };
     const [response, setResponse] = useState(null);
 
@@ -263,9 +333,9 @@ const Dashboard = () => {
             .then((res) => {
                 console.trace("success", res.data);
                 const data = res.data;
-
+                let empresaItem = null;
                 if (userData) {
-                    const empresaItem = data.find(
+                    empresaItem = data.find(
                         (i) => i?.id === userData?.empresa_id
                     );
                     setEmpresa(empresaItem);
@@ -276,10 +346,11 @@ const Dashboard = () => {
                 const fullUserPolo = JSON.parse(
                     sessionStorage.getItem("fullUserPolo") || "null"
                 );
+                console.trace("empresaItem", empresaItem);
                 if (fullUserPolo?.id) {
                     setPoloFilter(fullUserPolo.id ?? null);
                 } else {
-                    setPoloFilter(empresa?.polos?.[0]?.id ?? null);
+                    setPoloFilter(empresaItem?.polos?.[0]?.id ?? null);
                 }
 
                 setLoadEmpresa(false);
@@ -391,6 +462,7 @@ const Dashboard = () => {
                 console.log("responseeeeee", resData);
 
                 setLoadDocumentos(false);
+                
                 setYears(resData?.available_years);
 
                 setDocumentosFun(
@@ -417,7 +489,7 @@ const Dashboard = () => {
         const apiUrl2 = `/v1/facturas/stats?polo=${polo}&year=${year}&month=${month}&tipo=${tipo}`;
         console.log(polo, year, month, tipo);
 
-        axios
+        api
             .get(apiUrl2)
             .then((response) => {
                 setStats(response.data);
@@ -442,14 +514,18 @@ const Dashboard = () => {
                         id: 3,
                         title: "Facturas não pagas",
                         iconClass: "ri-timer-line",
-                        value: formatCurrency(response.data?.naoPagasValor || 0),
+                        value: formatCurrency(
+                            response.data?.naoPagasValor || 0
+                        ),
                         count: `${response.data?.naoPagas} Factura(s)`,
                     },
                     {
                         id: 4,
                         title: "Facturas vencidas",
                         iconClass: "ri-close-circle-line",
-                        value: formatCurrency(response.data?.vencidasValor || 0),
+                        value: formatCurrency(
+                            response.data?.vencidasValor || 0
+                        ),
                         count: `${response.data?.vencidas} Factura(s)`,
                     },
                 ]);
@@ -461,7 +537,7 @@ const Dashboard = () => {
             });
     };
     useEffect(() => {
-        console.log("changedddddd");
+       
         if (typeDateFilter == "Intervalo") {
             const dateRange = this.dateRangeFilter?.split(" - ") ?? null;
             console.log("daterange", dateRange);
@@ -478,7 +554,7 @@ const Dashboard = () => {
         monthFilter,
         tipoFilter,
         typeDateFilter,
-        dataRangeFilter,
+        dateRangeFilter,
     ]);
     return (
         <div className="dashboardContainer">
@@ -553,7 +629,10 @@ const Dashboard = () => {
                 style={{ border: "1px solid #eeeeee" }}
             >
                 {/* ================= HEADER ================= */}
-                <div className="card-header border-0">
+                <div
+                    className="card-header border-0"
+                    style={{ background: "#edeff2ff" }}
+                >
                     <div className="d-flex align-items-center gap-3">
                         <h5 className="card-title mb-0 fs-17">Documentos</h5>
 
@@ -714,6 +793,16 @@ const Dashboard = () => {
                             }
                         >
                             <option value="">Todos documentos</option>
+                            {
+                                tiposDocumentos.map((tipo) => (
+                                    <option
+                                        key={tipo.name}
+                                        value={tipo.name}
+                                    >
+                                        {tipo.name}
+                                    </option>
+                                ))
+                            }
                         </select>
                     </div>
                 </div>
@@ -721,73 +810,331 @@ const Dashboard = () => {
                 {/* ================= TABLE ================= */}
                 {!loadEmpresa && !loadDocumentos ? (
                     <div className="container">
-                        {filteredDocumentos?.length > 0 ? (
-                            <div className="table-responsive">
-                                <table className="table table-gridjs">
-                                    <thead>
-                                        <tr>
-                                            <th>Nº</th>
-                                            <th>Tipo</th>
-                                            <th>NIF</th>
-                                            <th>Polo</th>
-                                            <th>Data</th>
-                                            <th>Total</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody>
-                                        {filteredDocumentos?.map(
-                                            (data, index) =>
-                                                showItem(
-                                                    visibleDocumentos,
-                                                    data,
-                                                    index
-                                                ) ? (
-                                                    <tr key={data?.index}>
-                                                        <td>
-                                                            {
-                                                                data.numeroDocumento
-                                                            }
-                                                        </td>
-                                                        <td>
-                                                            {data.tipoDocumento}
-                                                        </td>
-                                                        <td>
-                                                            {data?.cliente
-                                                                ?.nif ??
-                                                                "-- Consumidor Final --"}
-                                                        </td>
-                                                        <td>
-                                                            {
-                                                                data?.polo
-                                                                    ?.nome_polo
-                                                            }
-                                                        </td>
-                                                        <td>
-                                                            {data?.dataEmissao}
-                                                        </td>
-                                                        <td>
-                                                            {data?.totalPagar}
-                                                        </td>
-                                                        <td>
-                                                            <button
-                                                                className="btn btn-sm btn-outline-primary"
-                                                                onClick={() =>
-                                                                    navigateToDetails(
-                                                                        data
-                                                                    )
-                                                                }
-                                                            >
-                                                                <i className="ri-settings-4-line"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ) : null
-                                        )}
-                                    </tbody>
-                                </table>
+                        {filteredDocumentos?.length > 0 && (
+                            <div
+                                style={{
+                                    paddingBlock: 15,
+                                    paddingInline: 5,
+                                    fontSize: 15,
+                                }}
+                            >
+                                Mostrando {visibleDocumentos?.[0]?.index + 1} -{" "}
+                                {visibleDocumentos?.[
+                                    visibleDocumentos?.length - 1
+                                ]?.index + 1}{" "}
+                                de {response?.total} documentos
                             </div>
+                        )}
+                        {filteredDocumentos?.length > 0 ? (
+                            <>
+                                <div className="table-responsive">
+                                    <table
+                                        className="table table-gridjs"
+                                        style={{ borderCollapse: "collapse" }}
+                                        id="dashboardTable"
+                                    >
+                                        <thead>
+                                            <tr>
+                                                <th>Nº</th>
+                                                <th>Tipo</th>
+                                                <th>NIF do adq.</th>
+                                                <th>Polo</th>
+                                                <th>Data Emi.</th>
+                                                <th>Total a pag.</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            {filteredDocumentos?.map(
+                                                (data, index) =>
+                                                    showItem(
+                                                        visibleDocumentos,
+                                                        data,
+                                                        index
+                                                    ) ? (
+                                                        <tr key={data?.index}>
+                                                            <td>
+                                                                <div>
+                                                                    {
+                                                                        data.numeroDocumento
+                                                                    }
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div>
+                                                                    {
+                                                                        data.tipoDocumento
+                                                                    }
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div>
+                                                                    {data
+                                                                        ?.cliente
+                                                                        ?.nif ??
+                                                                        "-- Consumidor Final --"}
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div>
+                                                                    {
+                                                                        data
+                                                                            ?.polo
+                                                                            ?.nome_polo
+                                                                    }
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div>
+                                                                    {format(
+                                                                        data?.dataEmissao,
+                                                                        "dd/MM/yyyy"
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div>
+                                                                    {formatCurrency(
+                                                                        parseFloat(
+                                                                            `${data?.totalPagar}`
+                                                                        )
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div>
+                                                                    <Popover>
+                                                                        <PopoverTrigger>
+                                                                            <div
+                                                                                style={{
+                                                                                    fontSize: 12,
+                                                                                    flexDirection:
+                                                                                        "row",
+                                                                                    display:
+                                                                                        "flex",
+                                                                                    gap: 5,
+                                                                                    alignItems:
+                                                                                        "center",
+                                                                                }}
+                                                                                className="btn btn-sm btn-outline-primary"
+                                                                                onClick={() =>
+                                                                                    navigateToDetails(
+                                                                                        data
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                <svg
+                                                                                    xmlns="http://www.w3.org/2000/svg"
+                                                                                    width="14"
+                                                                                    height="14"
+                                                                                    fill="currentColor"
+                                                                                    class="bi bi-gear"
+                                                                                    viewBox="0 0 16 16"
+                                                                                >
+                                                                                    <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0" />
+                                                                                    <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z" />
+                                                                                </svg>
+                                                                                Opções
+                                                                                <i className="ri-settings-4-line"></i>
+                                                                            </div>
+                                                                        </PopoverTrigger>
+                                                                        <PopoverContent className="tableOptions">
+                                                                            <div>
+                                                                                <div
+                                                                                    className="dropdown-item d-flex align-items-center"
+                                                                                    href="#"
+                                                                                    onClick={(
+                                                                                        e
+                                                                                    ) => {
+                                                                                        e.preventDefault();
+                                                                                        navigateToDetails(
+                                                                                            data
+                                                                                        );
+                                                                                    }}
+                                                                                >
+                                                                                    Ver
+                                                                                    detalhes
+                                                                                </div>
+
+                                                                                <div
+                                                                                    className="dropdown-item d-flex align-items-center"
+                                                                                    href="#"
+                                                                                    onClick={(
+                                                                                        e
+                                                                                    ) => {
+                                                                                        e.preventDefault();
+                                                                                        tipoFilter?.value ===
+                                                                                            "Recibo" ||
+                                                                                        data?.isRecibo
+                                                                                            ? exportPDF(
+                                                                                                  data,
+                                                                                                  "recibo"
+                                                                                              )
+                                                                                            : exportPDF(
+                                                                                                  data
+                                                                                              );
+                                                                                    }}
+                                                                                >
+                                                                                    Exportar
+                                                                                    pdf
+                                                                                </div>
+
+                                                                                {data?.tipoDocumento ===
+                                                                                    "Factura" &&
+                                                                                    !data?.isRecibo &&
+                                                                                    !data?.dataEmissaoRecibo &&
+                                                                                    tipoFilter?.value !==
+                                                                                        "Recibo" &&
+                                                                                    canAddNotaCredito(
+                                                                                        data
+                                                                                    ) && (
+                                                                                        <div
+                                                                                            className="dropdown-item d-flex align-items-center"
+                                                                                            href="#"
+                                                                                            onClick={(
+                                                                                                e
+                                                                                            ) => {
+                                                                                                e.preventDefault();
+                                                                                                navigateToDetails(
+                                                                                                    data,
+                                                                                                    true
+                                                                                                );
+                                                                                            }}
+                                                                                        >
+                                                                                            Emitir
+                                                                                            recibo(s)
+                                                                                        </div>
+                                                                                    )}
+
+                                                                                {(data?.tipoDocumento ===
+                                                                                    "Factura" ||
+                                                                                    data?.tipoDocumento ===
+                                                                                        "Factura Recibo" ||
+                                                                                    data?.tipoDocumento ===
+                                                                                        "Factura Global") &&
+                                                                                    !data
+                                                                                        ?.notas_credito?.[0]
+                                                                                        ?.id &&
+                                                                                    !data?.isRecibo &&
+                                                                                    tipoFilter?.value !==
+                                                                                        "Recibo" && (
+                                                                                        <div
+                                                                                            className="dropdown-item d-flex align-items-center"
+                                                                                            href="#"
+                                                                                            onClick={(
+                                                                                                e
+                                                                                            ) => {
+                                                                                                e.preventDefault();
+                                                                                                addNotaCredito(
+                                                                                                    data,
+                                                                                                    true
+                                                                                                );
+                                                                                            }}
+                                                                                        >
+                                                                                            Adicionar
+                                                                                            nota
+                                                                                            de
+                                                                                            crédito
+                                                                                        </div>
+                                                                                    )}
+                                                                            </div>
+                                                                        </PopoverContent>
+                                                                    </Popover>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ) : null
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {filteredDocumentos?.length > 0 && (
+                                    <nav
+                                        aria-label="Page navigation example"
+                                        style={{ marginBlock: "15px" }}
+                                    >
+                                        <ul className="pagination justify-content-center">
+                                            {/* Previous Button */}
+                                            <li
+                                                className={`page-item ${
+                                                    currentPage == 1
+                                                        ? "disabled"
+                                                        : ""
+                                                }`}
+                                                style={{ cursor: "pointer" }}
+                                                onClick={() => {
+                                                    if (currentPage != 1) {
+                                                        changePage(
+                                                            currentPage - 1
+                                                        );
+                                                    }
+                                                }}
+                                            >
+                                                <a className="page-link">«</a>
+                                            </li>
+
+                                            {/* Page Numbers */}
+                                            {getPages().map((page, index) =>
+                                                page === "..." ? (
+                                                    <li
+                                                        key={`dots-${index}`}
+                                                        className="page-item disabled"
+                                                    >
+                                                        <a className="page-link">
+                                                            ...
+                                                        </a>
+                                                    </li>
+                                                ) : (
+                                                    <li
+                                                        key={page}
+                                                        className={`page-item ${
+                                                            currentPage == page
+                                                                ? "active"
+                                                                : ""
+                                                        }`}
+                                                        style={{
+                                                            cursor: "pointer",
+                                                        }}
+                                                        onClick={(e) =>{
+                                                            e.preventDefault();
+                                                            changePage(page)
+                                                        }
+                                                        }
+                                                    >
+                                                        <span className="page-link">
+                                                            {page}
+                                                        </span>
+                                                    </li>
+                                                )
+                                            )}
+
+                                            {/* Next Button */}
+                                            <li
+                                                className={`page-item ${
+                                                    currentPage ===
+                                                    pages?.length
+                                                        ? "disabled"
+                                                        : ""
+                                                }`}
+                                                style={{ cursor: "pointer" }}
+                                                onClick={() => {
+                                                    if (
+                                                        currentPage !==
+                                                        pages?.length
+                                                    ) {
+                                                        changePage(
+                                                            currentPage + 1
+                                                        );
+                                                    }
+                                                }}
+                                            >
+                                                <a className="page-link">»</a>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                )}
+                            </>
                         ) : (
                             <div style={{ marginLeft: 5, paddingBlock: 10 }}>
                                 Nenhum documento encontrado. Ajuste os filtros.

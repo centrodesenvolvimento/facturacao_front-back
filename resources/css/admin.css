@@ -46,6 +46,7 @@
 }
 
 .adminHeader > .header > .logo {
+    height: auto;
     font-size: 18px;
     font-weight: 700;
     
@@ -85,7 +86,7 @@
 .profilePop {
     margin-right: 10px;
     width: 250px;
-    padding: 15px 0;
+    padding: 15px 0 !important;
     color: black;
 }
 

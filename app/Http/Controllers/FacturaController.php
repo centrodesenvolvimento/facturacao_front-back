@@ -168,7 +168,10 @@ class FacturaController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
-        $years = Factura::where('polo_id', $request->polo)
+        $years = Factura::when(
+        filled($request->polo),
+        fn ($query) => $query->where('polo_id', $request->polo)
+    )
             ->selectRaw('DISTINCT YEAR(dataEmissao) as year')
             ->orderBy('year', 'desc')
             ->pluck('year')

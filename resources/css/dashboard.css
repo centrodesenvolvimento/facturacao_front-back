@@ -546,8 +546,46 @@
     box-shadow: #959da51f 0px 8px 15px;
     justify-content: space-between;
     flex-wrap: wrap;
+    border-bottom: 3px solid #eeeeee;
 }
-.headerButtons {
+#dashboardTable td, #dashboardTable th {
+    border: 1px solid #dddddd;
+}
+#dashboardTable th {
+    background-color: #edeff2ff;
+    font-weight: 600;
+    text-align: left;
+    padding: 8px;
+}
+#dashboardTable td > div {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -webkit-box-orient: vertical;
+    border: none;
+    height: 3em;
+}
+.tableOptions {
+    max-width: 193px !important;
+    margin-right: 40px;
+    margin-top: -3px;
+    display: flex !important;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px 15px !important;
+    font-size: 14.5px;
+    width: auto !important;
+}
+.tableOptions .dropdown-item {
+    cursor: pointer;
+    margin-block: 6px;
+    transition: 0.2s ease-in-out;
+    &:hover {
+        color: #0077ff;
+    }
+}
+.headerButton s{
     display: flex;
     flex-direction: row;
     gap: 7px;

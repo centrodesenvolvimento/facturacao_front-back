@@ -245,7 +245,7 @@ const Admin = () => {
                                     {name?.split(" ")[1][0]}
                                 </div>
                             </PopoverTrigger>
-                            <PopoverContent className="profilePop">
+                            <PopoverContent className="profilePop" style={{}}>
                                 <div className="username">{`${
                                     JSON.parse(
                                         sessionStorage.getItem("currentUser")
