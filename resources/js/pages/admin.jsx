@@ -28,6 +28,7 @@ import {
 import { useState } from "react";
 import api from "../components/api";
 import Loading1 from "../components/loading1";
+import NovoDocumento from "./novoDocumento";
 
 const Admin = () => {
     const location = {};
@@ -1211,8 +1212,11 @@ const Admin = () => {
                 <div className="adminBody">
                     <AdminSide />
                     <div className="body">
+
                         {window.location.pathname.endsWith("/dashboard") ? (
                             <Dashboard />
+                        ) : window.location.pathname.endsWith("/novo/documento") ? (
+                            <NovoDocumento />
                         ) : (
                             <div>Caminho não existe!</div>
                         )}

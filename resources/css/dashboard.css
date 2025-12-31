@@ -591,6 +591,23 @@
     gap: 7px;
     align-self: flex-end;
 }
+.btn-primary {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    padding: 0px;
+    padding-right: 10px;
+    overflow: hidden;
+}
+.btn-primary svg {
+    background-color: rgba(255, 255, 255, 0.168);
+    width: 37px;
+    height: 37px;
+    padding: 6px;
+    font-size: 12px;
+
+}
 .container {
     background-color: white;
     width: 100%;

@@ -30,6 +30,9 @@ Route::prefix('v1')
         Route::get('dashboard', function () {
             return view('admin');
         })->name('dashboard');
+        Route::get('novo/documento', function () {
+            return view('admin');
+        })->name('novoDocumento');
 
         // USERS
         Route::get('usuarios', [UserApiController::class, 'index']);

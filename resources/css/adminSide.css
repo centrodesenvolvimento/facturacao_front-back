@@ -34,10 +34,11 @@
     gap: 10px;
     margin: 5px 7px;
     padding: 10px 13px;
-    font-size: 14px;
+    font-size: 12px;
     border-radius: 5px;
     cursor: pointer;
     transition: 0.2s ease-in-out;
+    color: #c8c8c8ff;
 }
 
 .option:hover,
@@ -56,13 +57,13 @@
 
 .option {
     /* color: #2b2b2b; */
-    color: white
+    color: #c8c8c8ff;
 }
 
 .option2 {
     padding-left: 35px;
     /* color: #2b2b2b; */
-    color: white;
+    color: #c8c8c8ff;
 }
 
 .option1 {
@@ -74,5 +75,5 @@
 .option3 {
     padding-left: 35px;
     background: #ffa60036;
-    color: #b87700;
+    color: #c8c8c8ff;
 }
