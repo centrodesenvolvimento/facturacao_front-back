@@ -16,8 +16,9 @@
     border-bottom: 1px solid #dfdfdf;
     margin-inline: -20px;
     padding-inline: 20px;
-    margin-top: -10px;
+    margin-top: -25px;
     padding-bottom: 10px;
+    padding-top: 20px;
 }
 .breadCrumb .dashboardContent span {
     color: grey;
@@ -595,9 +596,9 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
     padding: 0px;
-    padding-right: 10px;
+    padding-right: 12px;
     overflow: hidden;
 }
 .btn-primary svg {
