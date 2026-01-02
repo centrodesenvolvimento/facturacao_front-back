@@ -293,6 +293,24 @@ td, th {
     gap: 20px;
     margin-top: -20px;
 }
+.minus, .plus {
+    background-color: #F3F6F9;
+    border: none;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+
+    &:hover {
+        background-color: #496388;
+        color: white;
+    }
+}
 .totals {
     min-width: 350px;
     padding: 10px;

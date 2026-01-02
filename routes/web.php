@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\ArtigosController;
 use App\Http\Controllers\Api\Auth\AuthApiController;
+use App\Http\Controllers\Api\ClientesController;
 use App\Http\Controllers\Api\UserApiController;
 use App\Http\Controllers\EmpresasController;
 use App\Http\Controllers\FacturaController;
@@ -69,4 +71,25 @@ Route::prefix('v1')
 
 
         });
+
+        // ARTIGOS
+    Route::group(['prefix' => 'artigos'], function(){
+        Route::get('/', [ArtigosController::class, 'index']);
+        Route::post('store', [ArtigosController::class, 'store']);
+        Route::post('store/preco/{id}', [ArtigosController::class, 'storePreco']);
+        Route::get('show/{id}', [ArtigosController::class, 'show']);
+        Route::get('preco/{id}', [ArtigosController::class, 'getPreco']);
+        Route::get('precos/{id}', [ArtigosController::class, 'getPrecos']);
+        Route::get('imagem/{id}', [ArtigosController::class, 'getImagem']);
+        Route::post('update/{id}', [ArtigosController::class, 'update']);
+    });
+
+    // CLIENTES
+    Route::group(['prefix' => 'clientes'], function(){
+        Route::post('registar', [ClientesController::class, 'store']);
+        Route::get('index', [ClientesController::class, 'index']);
+        Route::get('detalhes/{id} ', [ClientesController::class, 'show']);
+        Route::delete('apagar/{id}', [ClientesController::class, 'destroy']);
+        Route::post('editar/{id}', [ClientesController::class, 'update']);
+    });
     });
