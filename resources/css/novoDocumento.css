@@ -285,7 +285,10 @@ label {
 td, th {
     border-inline: none;
 }
+.toastContainer {
+    z-index: 99999 !important;
 
+}
 .bottom {
     display: flex;
     flex-direction: row;

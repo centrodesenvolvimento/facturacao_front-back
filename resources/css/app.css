@@ -132,3 +132,26 @@
     }
 }
 
+.react-toastify {
+  z-index: 9999 !important;
+}
+
+ .Toastify__toast-container {
+  z-index: 9999 !important;
+}
+.Toastify__toast {
+  z-index: 10000 !important;
+}
+
+/* Ensure dialog has high but lower z-index */
+[data-slot="dialog-overlay"] {
+  z-index: 50 !important;
+}
+
+[data-slot="dialog-content"] {
+  z-index: 51 !important;
+}
+
+[data-radix-popper-content-wrapper] {
+  z-index: 51 !important;
+}

@@ -29,6 +29,9 @@ import { useState } from "react";
 import api from "../components/api";
 import Loading1 from "../components/loading1";
 import NovoDocumento from "./novoDocumento";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 const Admin = () => {
     const location = {};
@@ -221,6 +224,15 @@ const Admin = () => {
 
     return (
         <div>
+             <ToastContainer
+        position="top-center"
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="colored"
+        style={{ zIndex: 10000 }}
+      />
             <Loading1 loading={load}/>
             <section className="adminHeader1">
                 <section className="adminHeader">

@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import Login from "./pages/login";
 import Admin from "./pages/admin";
 import NovoDocumento from "./pages/novoDocumento";
+import 'react-toastify/dist/ReactToastify.css';
+
 
 const pages = {
     "login-root": Login,
