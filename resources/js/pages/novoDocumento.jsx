@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../../css/novoDocumento.css";
 import Loading1 from "../components/loading1";
 import logo from "../../images/logo.jpeg";
@@ -298,6 +298,8 @@ const NovoDocumento = () => {
         total: 0,
     });
     const [produtos, setProdutos] = useState([]);
+    const [itemsPerPage, setItemsPerPage] = useState(17);
+
     const incrementQuantidade = () => {
         setProdutoForm((p) => ({
             ...p,
@@ -708,8 +710,572 @@ if (
   }
   
 };
+const getTotalPages = () => {
+    return Array(
+      Math.ceil(selectedProdutos?.length / itemsPerPage)
+    ).fill("");
+  }
+
+  const getTotalPagesRecibos = () => {
+    return Array(
+      Math.ceil(
+        filteredPagamentos(payments)?.length /
+          itemsPerPage
+      )
+    ).fill("");
+  }
+  const getLastPageProductIndex = () => {
+    const totalItems = selectedProdutos?.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    // Items on the last page
+    const lastPageItemCount = totalItems - (totalPages - 1) * itemsPerPage;
+
+    // The index within 1-17 (or less if fewer items)
+    const lastItemIndex = lastPageItemCount;
+    return lastItemIndex;
+  }
+  const getLastPageProductIndexRecibos = () => {
+    const totalItems = filteredPagamentos(payments)?.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    const lastPageItemCount = totalItems - (totalPages - 1) * itemsPerPage;
+
+    const lastItemIndex = lastPageItemCount;
+    return lastItemIndex;
+  }
+  
+  const getPageBreakHeight = (index) => {
+    if (index > 17 && (index - 17 + 1) % 31 === 0) {
+      return '76px';
+    }
+    return '56px';
+  };
+  const getLastPageAdjustmentHeight = () => {
+    const index = getLastPageProductIndex();
+    if (index === 14) return '194px';
+    if (index === 15) return '146px';
+    if (index === 16) return '100px';
+    return '0';
+  };
+    const groupProdutosByTaxa = () => {
+    const groupedMap = new Map();
+
+    selectedProdutos.forEach((item) => {
+      const taxa = item?.produto?.impostoFull?.taxa ?? "N/A";
+
+      if (!groupedMap.has(taxa)) {
+        groupedMap.set(taxa, { items: [], incidencia: 0 });
+      }
+
+      const group = groupedMap.get(taxa);
+
+      if (item?.preco) {
+        group.incidencia += item.preco * item?.quantidade;
+      }
+
+      group.items.push(item);
+    });
+
+    
+    return Array.from(groupedMap.entries())
+      .map(([taxa, data], index) => {
+        return {
+          index: index,
+          taxa: taxa,
+          incidencia: data.incidencia,
+          motivo:
+            taxa == "0.00" || data?.incidencia == 0
+              ? data?.items[0]?.produto?.isencaoFull?.mencao_na_factura
+              : "",
+          total: (data.incidencia * parseFloat(taxa)) / 100,
+          // items: data?.items
+        };
+      })
+      .sort((a, b) => parseFloat(a?.taxa) - parseFloat(b?.taxa));
+  }
+    const HeaderTemplateRecibo = () => {
+  return (
+    <>
+      {/* HEADER */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          paddingTop: "5px",
+        }}
+      >
+        <div className="pdfLogo">
+          <img
+              src={empresaImage ||
+                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1769040000&v=beta&t=bIEZ01l0aSWRCzKkaO_eYQP_uPVOc4qTSFzuL4zkg9o"}
+              className="logo"
+            />
+          
+        </div>
+      </div>
+
+      <div className="pdfCompanyTitle" style={{ marginTop: "20px" }}>
+        {empresa?.nome_empresa}
+      </div>
+
+      {/* COMPANY + CLIENT INFO */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginTop: "10px",
+        }}
+      >
+        {/* COMPANY INFO */}
+        <div className="pdfCompanyInfo" style={{ flex: 1 }}>
+          <div className="pdfHeaderRow">
+            <span className="label">Localização: </span>
+            <span className="value">{localizacao}</span>
+          </div>
+
+          <div className="pdfHeaderRow">
+            <span className="label">NIF: </span>
+            <span className="value">{nif}</span>
+          </div>
+
+          {website !== "" && (
+            <div className="pdfHeaderRow">
+              <span className="label">Website: </span>
+              <span className="value">{website}</span>
+            </div>
+          )}
+
+          <div className="pdfHeaderRow">
+            <span className="label">Email: </span>
+            <span className="value">{email}</span>
+          </div>
+
+          <div className="pdfHeaderRow">
+            <span className="label">Tel: </span>
+            <span className="value">{telefone}</span>
+          </div>
+        </div>
+
+        {/* CLIENT INFO */}
+        <div className="pdfClientInfo" style={{ flex: 1 }}>
+          <div className="pdfHeaderRow">
+            <span className="label">Cliente: </span>
+            <span className="value">
+              {selectedCliente?.nome || "Consumidor Final"}
+            </span>
+          </div>
+
+          <div className="pdfHeaderRow">
+            <span className="label">NIF: </span>
+            <span className="value">
+              {selectedCliente?.nif || "N/A"}
+            </span>
+          </div>
+
+          <div className="pdfHeaderRow">
+            <span className="label">Localização: </span>
+            <span className="value">
+              {selectedCliente?.localizacao || "N/A"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* TABLE */}
+      <div
+        className="table-responsive"
+        style={{
+          height: "100%",
+          paddingBottom: "80px",
+          overflowY: "hidden",
+          marginTop: "50px",
+        }}
+      >
+        <table className="table table-gridjs" style={{ backgroundColor: "white" }}>
+          <thead>
+            <tr>
+              <th
+                colSpan={5}
+                style={{
+                  fontWeight: 700,
+                  fontSize: "18px",
+                  borderTop: "none",
+                }}
+              >
+                {(notaParam
+                  ? tipoNota
+                  : "Recibo") +
+                  " Nº " +
+                  (notaParam
+                    ? responseDoc?.numeroDocumento
+                    : responseDoc?.numeroRecibo)}
+              </th>
+
+              <th
+                style={{
+                  fontSize: "13px",
+                  textAlign: "right",
+                  fontWeight: 600,
+                  borderTop: "none",
+                }}
+              >
+                {replica}
+              </th>
+            </tr>
+
+            <tr style={{ fontWeight: 900 }}>
+              <th>Data Emi.</th>
+              <th>NIF.</th>
+              <th>V/ Ref.</th>
+              <th style={{ backgroundColor: "#FAFBFD" }}>Documento ref.</th>
+              <th style={{ backgroundColor: "#FAFBFD" }}>Valor doc.</th>
+              <th style={{ width: "220px" }}></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>
+                {(() => {
+                  const date =
+                    !notaParam || notaParamBypass
+                      ? responseDoc?.dataEmissaoRecibo
+                      : responseDoc?.dataEmissao;
+
+                  return date ? format(new Date(date), "dd-MM-yyyy") : "";
+                })()}
+              </td>
+
+              <td>
+                {selectedCliente?.nif || "Consumidor Final"}
+              </td>
+
+              <td>
+                {notaParam
+                  ? responseDoc?.numeroDocumento
+                  : responseDoc?.numeroRecibo}
+              </td>
+
+              <td style={{ backgroundColor: "#FAFBFD" }}>
+                {responseDoc?.factura?.numeroDocumento}
+              </td>
+
+              <td style={{ backgroundColor: "#FAFBFD" }}>
+                {totalValue("total")}
+              </td>
+
+              <td rowSpan={2} style={{border: 'none'}}>
+                <div
+                  className="qrContainer"
+                  style={{
+                    padding: 0,
+                    height: "80px",
+                    transform: "translateY(-55px)",
+                  }}
+                >
+                  <img
+                    src={responseDoc?.qr_code_recibo}
+                    style={{
+                      width: "100%",
+                      height: "220px",
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td colSpan={4} style={{ borderBottom: "none" }}>
+                <section style={{ flex: 1 }}>
+                  {tipoDocumento === "Factura Recibo" ||
+                  tipoDocumento === "Factura" ||
+                  tipoNota ==
+                    "Nota de crédito (anulação)" ? (
+                    !notaParam || notaParamBypass ? (
+                      <>
+                        <div style={{ opacity: 0, fontWeight: 800 }}>
+                          something
+                        </div>
+                        <div style={{ opacity: 0 }}>something</div>
+                      </>
+                    ) : (
+                      <>
+                        {motivo && (
+                          <>
+                            <div style={{ fontWeight: 800 }}>
+                              Motivo de emissão:
+                            </div>
+                            <div style={{ maxHeight: "25px" }}>
+                              {motivo}
+                            </div>
+                          </>
+                        )}
+
+                        <div
+                          style={{
+                            fontWeight: 800,
+                            marginTop: "10px",
+                          }}
+                        >
+                          Assinatura do cliente:
+                          <span
+                            style={{
+                              minWidth: "200px",
+                              borderBottom: "1px solid #595959",
+                              height: "25px",
+                              width: "450px",
+                              display: "inline-block",
+                              transform: "translateY(3px)",
+                            }}
+                          />
+                        </div>
+                      </>
+                    )
+                  ) : (
+                    <>
+                      <div style={{ fontWeight: 800 }}>Obs:</div>
+                      <div style={{ maxHeight: "25px" }}>
+                        Este documento não serve de factura.
+                        <br />
+                        {notas}
+                      </div>
+                    </>
+                  )}
+                </section>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+};
+
+const HeaderTemplate = () => {
+  return (
+    <>
+      {/* HEADER */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          paddingTop: "5px",
+        }}
+      >
+        <div className="pdfLogo">
+          <img
+              src={empresaImage ||
+                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1769040000&v=beta&t=bIEZ01l0aSWRCzKkaO_eYQP_uPVOc4qTSFzuL4zkg9o"}
+              className="logo"
+            />
+        </div>
+      </div>
+
+      {/* COMPANY NAME */}
+      <div className="pdfCompanyTitle" style={{ marginTop: "20px" }}>
+        {empresa?.nome_empresa}
+      </div>
+
+      {/* COMPANY + CLIENT INFO */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginTop: "10px",
+        }}
+      >
+        {/* COMPANY INFO */}
+        <div className="pdfCompanyInfo" style={{ flex: 1 }}>
+          <div className="pdfHeaderRow">
+            <span className="label">Localização: </span>
+            <span className="value">{localizacao}</span>
+          </div>
+
+          <div className="pdfHeaderRow">
+            <span className="label">NIF: </span>
+            <span className="value">{nif}</span>
+          </div>
+
+          {website !== "" && (
+            <div className="pdfHeaderRow">
+              <span className="label">Website: </span>
+              <span className="value">{website}</span>
+            </div>
+          )}
+
+          <div className="pdfHeaderRow">
+            <span className="label">Email: </span>
+            <span className="value">{email}</span>
+          </div>
+
+          <div className="pdfHeaderRow">
+            <span className="label">Tel: </span>
+            <span className="value">{telefone}</span>
+          </div>
+        </div>
+
+        {/* CLIENT INFO */}
+        <div className="pdfClientInfo" style={{ flex: 1 }}>
+          <div className="pdfHeaderRow">
+            <span className="label">Cliente: </span>
+            <span className="value">
+              {selectedCliente?.nome || "Consumidor Final"}
+            </span>
+          </div>
+
+          <div className="pdfHeaderRow">
+            <span className="label">NIF: </span>
+            <span className="value">
+              {selectedCliente?.nif || "N/A"}
+            </span>
+          </div>
+
+          <div className="pdfHeaderRow">
+            <span className="label">Localização: </span>
+            <span className="value">
+              {selectedCliente?.localizacao || "N/A"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* TABLE */}
+      <div
+        className="table-responsive"
+        style={{
+          height: "100%",
+          paddingBottom: "80px",
+          overflowY: "hidden",
+          marginTop: "50px",
+        }}
+      >
+        <table className="table table-gridjs" style={{ backgroundColor: "white" }}>
+          <thead>
+            <tr>
+              <th
+                colSpan={4}
+                style={{
+                  fontWeight: 700,
+                  fontSize: "18px",
+                  borderTop: "none",
+                }}
+              >
+                {tipoDocumento + " Nº " + responseDoc?.numeroDocumento}
+              </th>
+
+              <th
+                style={{
+                  fontSize: "13px",
+                  textAlign: "right",
+                  fontWeight: 600,
+                  borderTop: "none",
+                }}
+              >
+                {replica}
+              </th>
+            </tr>
+
+            <tr style={{ fontWeight: 900 }}>
+              <th>Data Emi.</th>
+              <th>Data Val.</th>
+              <th>NIF.</th>
+              <th>V/ Ref.</th>
+              <th style={{ width: "220px" }}></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>
+                {dataEmissao
+                  ? format(new Date(dataEmissao), "dd-MM-yyyy")
+                  : ""}
+              </td>
+
+              <td>
+                {tipoDocumento === "Factura Recibo"
+                  ? "N/A"
+                  : dataValidade
+                  ? format(new Date(dataValidade), "dd/MM/yyyy")
+                  : ""}
+              </td>
+
+              <td>{selectedCliente?.value?.nif || "N/A"}</td>
+
+              <td>{responseDoc?.numeroDocumento}</td>
+
+              <td rowSpan={2} style={{border: 'none'}}>
+                <div
+                  className="qrContainer"
+                  style={{
+                    padding: 0,
+                    height: "80px",
+                    transform: "translateY(-55px)",
+                  }}
+                >
+                  <img
+                    src={responseDoc?.qr_code}
+                    style={{
+                      width: "100%",
+                      height: "220px",
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td colSpan={4} style={{ borderBottom: "none" }}>
+                <section style={{ flex: 1 }}>
+                  {tipoDocumento === "Factura Recibo" ||
+                  tipoDocumento === "Factura" ? (
+                    <>
+                      {(!notas || notas === "") && (
+                        <>
+                          <div style={{ opacity: 0, fontWeight: 800 }}>
+                            something
+                          </div>
+                          <div style={{ opacity: 0 }}>something</div>
+                        </>
+                      )}
+
+                      {notas && notas !== "" && (
+                        <>
+                          <div style={{ fontWeight: 800 }}>Obs:</div>
+                          <div style={{ maxHeight: "25px" }}>{notas}</div>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ fontWeight: 800 }}>Obs:</div>
+                      <div style={{ maxHeight: "25px" }}>
+                        Este documento não serve de factura.
+                        <br />
+                        {notas}
+                      </div>
+                    </>
+                  )}
+                </section>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+};
+
 
     return (
+        <>
         <div className="dashboardContainer" style={{ background: "#f6f6f6ff" }}>
             <AlertDialog open={removeOpen} onOpenChange={setRemoveOpen}>
                                 
@@ -1511,7 +2077,7 @@ if (
                         id="exampleFormControlTextarea1"
                         placeholder="Notas..."
                         rows={5}
-                        style={{ height: "100%", margin: 0 }}
+                        
                         value={notas}
                         onChange={(e) => setNotas(e.target.value)}
                         disabled={!!factura}
@@ -1519,9 +2085,9 @@ if (
                             factura
                                 ? {
                                       cursor: "not-allowed",
-                                      pointerEvents: "none",
+                                      pointerEvents: "none", height: "100%", margin: 0, zIndex: 0
                                   }
-                                : {}
+                                : {height: "100%", margin: 0, zIndex: 0}
                         }
                     />
 
@@ -2544,6 +3110,692 @@ if (
 </Dialog>
 
         </div>
+
+        {/* pdfcontainersssss */}
+        <div id="pdfContainer1">
+      <div style={{
+        backgroundColor: 'white',
+        gap: '10px',
+        width: '100%',
+        height: '100%',
+        padding: '20px',
+        paddingTop: '60px'
+      }}>
+        <div className="pdfHeader">
+          {getTotalPages().map((page, pageIndex) => (
+            <React.Fragment key={pageIndex}>
+              {(!notaParam || notaParamBypass) ? (
+                <>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    paddingTop: '5px'
+                  }}>
+                    <div className="pdfLogo">
+                      <img
+              src={empresaImage ||
+                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1769040000&v=beta&t=bIEZ01l0aSWRCzKkaO_eYQP_uPVOc4qTSFzuL4zkg9o"}
+              className="logo"
+            />
+                    </div>
+                  </div>
+
+                  <div className="pdfCompanyTitle" style={{ marginTop: '20px' }}>
+                    {empresa?.nome_empresa}
+                  </div>
+                  
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginTop: '10px'
+                  }}>
+                    <div className="pdfCompanyInfo" style={{ flex: 1 }}>
+                      <div className="pdfHeaderRow">
+                        <span className="label">Localização: </span>
+                        <span className="value">{localizacao}</span>
+                      </div>
+                      <div className="pdfHeaderRow">
+                        <span className="label">NIF: </span>
+                        <span className="value">{nif}</span>
+                      </div>
+                      {website && website !== '' && (
+                        <div className="pdfHeaderRow">
+                          <span className="label">Website: </span>
+                          <span className="value">{website}</span>
+                        </div>
+                      )}
+                      <div className="pdfHeaderRow">
+                        <span className="label">Email: </span>
+                        <span className="value">{email}</span>
+                      </div>
+                      <div className="pdfHeaderRow">
+                        <span className="label">Tel: </span>
+                        <span className="value">{telefone}</span>
+                      </div>
+                    </div>
+
+                    <div className="pdfClientInfo" style={{ flex: 1 }}>
+                      <div className="pdfHeaderRow">
+                        <span className="label">Cliente: </span>
+                        <span className="value">
+                          {selectedCliente?.nome || "Consumidor Final"}
+                        </span>
+                      </div>
+                      <div className="pdfHeaderRow">
+                        <span className="label">NIF: </span>
+                        <span className="value">{selectedCliente?.nif || "N/A"}</span>
+                      </div>
+                      <div className="pdfHeaderRow">
+                        <span className="label">Localização: </span>
+                        <span className="value">
+                          {selectedCliente?.localizacao || "N/A"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className="table-responsive"
+                    style={{
+                      height: '100%',
+                      paddingBottom: '80px',
+                      overflowY: 'hidden',
+                      marginTop: '50px'
+                    }}
+                  >
+                    <table className="table table-gridjs" style={{ backgroundColor: 'white' }}>
+                      <thead style={{ backgroundColor: 'white' }}>
+                        <tr style={{ backgroundColor: 'white' }}>
+                          <th colSpan="4" style={{
+                            fontWeight: 700,
+                            fontSize: '18px',
+                            backgroundColor: 'white',
+                            borderTop: 'none'
+                          }}>
+                            {`${tipoDocumento} Nº ${responseDoc?.numeroDocumento}`}
+                          </th>
+                          <th style={{
+                            fontSize: '13px',
+                            backgroundColor: 'white',
+                            borderTop: 'none',
+                            textAlign: 'right',
+                            fontWeight: 600
+                          }}>
+                            {replica}
+                          </th>
+                        </tr>
+                        <tr style={{ backgroundColor: 'white', fontWeight: '900' }}>
+                          <th style={{ backgroundColor: 'white' }}>Data Emi.</th>
+                          <th style={{ backgroundColor: 'white' }}>Data Val.</th>
+                          <th style={{ backgroundColor: 'white' }}>NIF.</th>
+                          <th style={{ backgroundColor: 'white' }}>V/ Ref.</th>
+                          <th style={{ backgroundColor: 'white', maxWidth: '220px', width: '220px' }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>{format(new Date(dataEmissao), 'dd-MM-yyyy')}</td>
+                          <td>
+                            {tipoDocumento === 'Factura Recibo' ? 'N/A' : format(new Date(dataValidade?.length > 0 ? dataValidade : null), 'dd-MM-yyyy')}
+                          </td>
+                          <td>
+                            {selectedCliente?.nif || "N/A"}
+                          </td>
+                          <td>
+                            {responseDoc?.numeroDocumento}
+                          </td>
+                          <td rowSpan={2} style={{border: 'none'}}>
+                <div
+                  className="qrContainer"
+                  style={{
+                    padding: 0,
+                    height: "80px",
+                    transform: "translateY(-55px)",
+                  }}
+                >
+                  <img
+                    src={responseDoc?.qr_code}
+                    style={{
+                      width: "100%",
+                      height: "220px",
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
+              </td>
+                        </tr>
+
+                        <tr>
+                          <td colSpan="4" style={{ borderBottom: 'none' }}>
+                            <section style={{ flex: 1 }}>
+                              {(tipoDocumento === 'Factura Recibo' || tipoDocumento === 'Factura') ? (
+                                <>
+                                  {(!notas || notas === '') && (
+                                    <>
+                                      <div style={{ opacity: 0, fontWeight: 800 }}>something</div>
+                                      <div style={{ opacity: 0 }}>something</div>
+                                    </>
+                                  )}
+                                  {notas && notas !== '' && (
+                                    <>
+                                      <div style={{ fontWeight: 800 }}>Obs:</div>
+                                      <div style={{ maxHeight: '25px' }}>
+                                        {notas}
+                                      </div>
+                                    </>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  <div style={{ fontWeight: 800 }}>Obs:</div>
+                                  <div style={{ maxHeight: '25px' }}>
+                                    Este documento não serve de factura. <br />
+                                    {notas}
+                                  </div>
+                                </>
+                              )}
+                            </section>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              ) : (
+                HeaderTemplateRecibo()
+              )}
+
+              <div
+                className="table-responsive"
+                style={{
+                  height: '100%',
+                  paddingBottom: '80px',
+                  overflowY: 'hidden',
+                  marginTop: '-15px'
+                }}
+              >
+                <table className="table table-gridjs" style={{ backgroundColor: 'white' }}>
+                  <thead style={{ background: 'white' }}>
+                    <tr style={{ backgroundColor: 'white' }}>
+                      <th style={{ maxWidth: '20px', width: '20px', backgroundColor: 'white' }}>#</th>
+                      <th style={{ backgroundColor: 'white' }}>Descrição</th>
+                      <th style={{ backgroundColor: 'white' }}>Qtd.</th>
+                      <th style={{ backgroundColor: 'white' }}>P. Unitário</th>
+                      <th style={{ backgroundColor: 'white' }}>Desc.</th>
+                      <th style={{ backgroundColor: 'white' }}>Taxa</th>
+                      <th style={{ backgroundColor: 'white' }}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedProdutos && selectedProdutos.length > 0 && 
+                      selectedProdutos
+                        .slice((pageIndex * itemsPerPage), (pageIndex * itemsPerPage) + itemsPerPage)
+                        .map((data, index) => {
+                          const globalIndex = index;
+                          const isLastPage = pageIndex + 1 === getTotalPages().length;
+                          const isLastProduct = data?.index === selectedProdutos[selectedProdutos.length - 1]?.index;
+                          
+                          return (
+                            <React.Fragment key={index}>
+                              <tr>
+                                <td>
+                                  <div>{data?.index + ''}</div>
+                                </td>
+                                <td>
+                                  <div
+                                    style={{
+                                      display: '-webkit-box',
+                                      WebkitLineClamp: 1,
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      WebkitBoxOrientation: 'vertical',
+                                      border: 'none'
+                                    }}
+                                    title={data?.produto?.designacao}
+                                  >
+                                    {data?.produto?.designacao}
+                                  </div>
+                                </td>
+                                <td>
+                                  <div>{data?.quantidade + ''}</div>
+                                </td>
+                                <td>
+                                  <div>{formatCurrency1(data?.preco)}</div>
+                                </td>
+                                <td>
+                                  <div>
+                                    {formatCurrency1(data?.descontoFinal) + 
+                                      (data?.descontoPercentual
+                                        ? ' (' + data?.descontoPercentual + '%)'
+                                        : '')}
+                                  </div>
+                                </td>
+                                <td>
+                                  <div>
+                                    {formatCurrency1(data?.taxaImposto) + ' (' + extractPercentage(data) + '%)'}
+                                  </div>
+                                </td>
+                                <td>
+                                  <div>{formatCurrency1(data?.total)}</div>
+                                </td>
+                              </tr>
+
+                              {((globalIndex + 1) === 17 || (globalIndex > 18 && ((globalIndex - 17 + 1) % 31 === 0))) && (
+                                <tr style={{ 
+                                  border: 'none',
+                                  height: (globalIndex > 17 && ((globalIndex - 17 + 1) % 31 === 0)) ? '76px' : '56px'
+                                }}>
+                                  <td style={{ border: 'none' }} colSpan="18" className="page-break">
+                                    <div style={{ pageBreakAfter: 'always' }}></div>
+                                  </td>
+                                </tr>
+                              )}
+
+                              {isLastPage && isLastProduct && (index + 1 === 14 || index + 1 === 15 || index + 1 === 16) && (
+                                <tr style={{ 
+                                  border: 'none',
+                                  height: index + 1 === 14 ? '194px' 
+                                        : index + 1 === 15 ? '146px'
+                                        : '100px'
+                                }}>
+                                  <td style={{ border: 'none' }} colSpan="18" className="page-break">
+                                    <div style={{ pageBreakAfter: 'always' }}></div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        })
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </React.Fragment>
+          ))}
+
+          {[14, 15, 16, 17].includes(getLastPageProductIndex()) && (
+            (!notaParam || notaParamBypass) ? HeaderTemplate() : HeaderTemplateRecibo()
+          )}
+
+          <div className="bottom" style={{ 
+            marginTop: [14, 15, 16, 17].includes(getLastPageProductIndex()) ? '-20px' : '-55px'
+          }}>
+            {tipoDocumento !== 'Factura Recibo' ? (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'flex-end' }}>
+                <table className="table table-gridjs" style={{ 
+                  backgroundColor: 'white', 
+                  fontSize: '12px', 
+                  maxWidth: '600px', 
+                  marginTop: '-30px' 
+                }}>
+                  <thead style={{ height: '15px' }}>
+                    <tr>
+                      <th colSpan="4" style={{ 
+                        backgroundColor: 'white', 
+                        paddingInline: 0, 
+                        borderTop: 'none', 
+                        paddingBlock: '2px' 
+                      }}>
+                        <span style={{ 
+                          flex: 1, 
+                          width: '100%', 
+                          color: 'rgb(104, 104, 104)', 
+                          fontSize: '13px', 
+                          paddingBottom: '10px', 
+                          fontWeight: 500 
+                        }}>
+                          Quadro Resumo de Impostos
+                        </span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <thead style={{ background: 'white' }}>
+                    <tr style={{ 
+                      background: 'white', 
+                      maxHeight: '8px', 
+                      overflow: 'hidden', 
+                      boxSizing: 'border-box', 
+                      padding: 0 
+                    }}>
+                      <th style={{ 
+                        maxHeight: '8px', 
+                        boxSizing: 'border-box', 
+                        background: 'white', 
+                        padding: '5px' 
+                      }}>Taxa (%)</th>
+                      <th style={{ 
+                        maxHeight: '8px', 
+                        boxSizing: 'border-box', 
+                        background: 'white', 
+                        padding: '5px' 
+                      }}>Incidência</th>
+                      <th style={{ 
+                        maxHeight: '8px', 
+                        boxSizing: 'border-box', 
+                        background: 'white', 
+                        padding: '5px' 
+                      }}>Total</th>
+                      <th style={{ 
+                        maxHeight: '8px', 
+                        boxSizing: 'border-box', 
+                        background: 'white', 
+                        padding: '5px' 
+                      }}>Motivo isenção</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groupProdutosByTaxa?.()?.map((data, index) => (
+                      <tr key={index} style={{ 
+                        maxHeight: '8px', 
+                        overflow: 'hidden', 
+                        padding: 0, 
+                        borderBottom: 'none' 
+                      }}>
+                        <td style={{ 
+                          maxHeight: '8px', 
+                          boxSizing: 'border-box', 
+                          background: 'white', 
+                          padding: '5px', 
+                          borderBottom: 'none' 
+                        }}>{data?.taxa}</td>
+                        <td style={{ 
+                          maxHeight: '8px', 
+                          boxSizing: 'border-box', 
+                          background: 'white', 
+                          padding: '5px', 
+                          borderBottom: 'none' 
+                        }}>{formatCurrency1(data?.incidencia)}</td>
+                        <td style={{ 
+                          maxHeight: '8px', 
+                          boxSizing: 'border-box', 
+                          background: 'white', 
+                          padding: '5px', 
+                          borderBottom: 'none' 
+                        }}>{formatCurrency1(data?.total)}</td>
+                        <td style={{ 
+                          maxHeight: '8px', 
+                          boxSizing: 'border-box', 
+                          background: 'white', 
+                          padding: '5px', 
+                          borderBottom: 'none' 
+                        }}>{data?.motivo}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div style={{ flex: 1 }}></div>
+            )}
+
+            <div className="totals" style={{ 
+              backgroundColor: 'white', 
+              border: 'none', 
+              marginTop: '-20px' 
+            }}>
+              <div className="totalRow">
+                <span className="label">Total Ilíquido:</span>
+                <span className="value">
+                  {formatCurrency(
+                    totalValue?.('total') + totalValue?.('descontoFinal') - totalValue?.('taxaImposto')
+                  )}
+                </span>
+              </div>
+              <div className="totalRow">
+                <span className="label">Total de Descontos:</span>
+                <span className="value">
+                  {formatCurrency(totalValue?.('descontoFinal'))}
+                </span>
+              </div>
+              <div className="totalRow">
+                <span className="label">Total de Impostos:</span>
+                <span className="value">
+                  {formatCurrency(totalValue?.('taxaImposto'))}
+                </span>
+              </div>
+              <div className="totalRow1">
+                <span className="label1">Total a Pagar:</span>
+                <span className="value">
+                  {formatCurrency(totalValue?.('total'))}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {[13, 12, 11, 10].includes(getLastPageProductIndex()) && tipoDocumento === 'Factura Recibo' && (
+            <>
+              <tr style={{ 
+                border: 'none',
+                height: getLastPageProductIndex() === 13 ? '174px' :
+                       getLastPageProductIndex() === 12 ? '220px' :
+                       getLastPageProductIndex() === 11 ? '266px' :
+                       getLastPageProductIndex() === 10 ? '312px' : '0'
+              }}>
+                <td style={{ border: 'none' }} colSpan="18" className="page-break">
+                  <div style={{ pageBreakAfter: 'always' }}></div>
+                </td>
+              </tr>
+              {(!notaParam() || notaParamBypass()) ? HeaderTemplate() : HeaderTemplateRecibo()}
+            </>
+          )}
+
+          {tipoDocumento === 'Factura Recibo' && (
+            <>
+              <div
+                className="table-responsive"
+                style={{
+                  height: '100%',
+                  paddingBottom: '80px',
+                  overflowY: 'hidden',
+                  marginTop: '25px'
+                }}
+              >
+                <table className="table table-gridjs" style={{ backgroundColor: 'white' }}>
+                  <thead style={{ background: '#f3f6f9' }}>
+                    <tr style={{ backgroundColor: '#f3f6f9' }}>
+                      <th style={{ maxWidth: '20px', width: '20px' }}>#</th>
+                      <th>Forma de pag.</th>
+                      <th>Banco</th>
+                      <th>Data</th>
+                      <th>Ref. do pag.</th>
+                      <th>Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredPagamentos(payments)?.map((item, index) => {
+                      const showPageBreak = (
+                        (index + 1 === 2 && getLastPageProductIndex() === 9) ||
+                        (index + 1 === 3 && getLastPageProductIndex() === 8) ||
+                        (index + 1 === 4 && getLastPageProductIndex() === 7) ||
+                        (index + 1 === 5 && getLastPageProductIndex() === 6) ||
+                        (index + 1 === 6 && getLastPageProductIndex() === 5) ||
+                        (index + 1 === 7 && getLastPageProductIndex() === 4) ||
+                        (index + 1 === 8 && getLastPageProductIndex() === 3) ||
+                        (index + 1 === 9 && getLastPageProductIndex() === 2)
+                      );
+                      
+                      return (
+                        <React.Fragment key={index}>
+                          <tr>
+                            <td>{index + 1}</td>
+                            <td>{item?.tipoPagamento || "-"}</td>
+                            <td>{item?.banco || "-"}</td>
+                            <td>
+                              {item?.dataPagamento 
+                                ? format(new Date(item?.dataPagamento), 'dd-MM-yyyy')
+                                : "-"}
+                            </td>
+                            <td>{item?.referencia || "-"}</td>
+                            <td>
+                              {item?.valor
+                                ? formatCurrency(item?.valor)
+                                : "AOA 0"}
+                            </td>
+                          </tr>
+                          
+                          {showPageBreak && (
+                            <>
+                              <tr style={{ border: 'none', height: '195px' }}>
+                                <td style={{ border: 'none' }} colSpan="18" className="page-break">
+                                  <div style={{ pageBreakAfter: 'always' }}></div>
+                                </td>
+                              </tr>
+                              <tr style={{ border: 'none', padding: 0 }}>
+                                <td colSpan="6" style={{ border: 'none', padding: 0 }}>
+                                  {(!notaParam || notaParamBypass) ? HeaderTemplate() : HeaderTemplateRecibo()}
+                                </td>
+                              </tr>
+                              <tr style={{ backgroundColor: '#f3f6f9' }}>
+                                <th style={{ maxWidth: '20px', width: '20px' }}>#</th>
+                                <th>Forma de pag.</th>
+                                <th>Banco</th>
+                                <th>Data</th>
+                                <th>Ref. do pag.</th>
+                                <th>Valor</th>
+                              </tr>
+                            </>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="bottom" style={{ marginTop: '-60px', display: tipoDocumento === 'Factura Recibo' ? 'flex' : 'none' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'flex-end' }}>
+                  <table className="table table-gridjs" style={{ 
+                    backgroundColor: 'white', 
+                    fontSize: '12px', 
+                    maxWidth: '600px', 
+                    marginTop: '-30px' 
+                  }}>
+                    <thead style={{ height: '15px' }}>
+                      <tr>
+                        <th colSpan="4" style={{ 
+                          backgroundColor: 'white', 
+                          paddingInline: 0, 
+                          borderTop: 'none', 
+                          paddingBlock: '2px' 
+                        }}>
+                          <span style={{ 
+                            flex: 1, 
+                            width: '100%', 
+                            color: 'rgb(104, 104, 104)', 
+                            fontSize: '13px', 
+                            paddingBottom: '10px', 
+                            fontWeight: 500 
+                          }}>
+                            Quadro Resumo de Impostos
+                          </span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <thead style={{ background: 'white' }}>
+                      <tr style={{ 
+                        background: 'white', 
+                        maxHeight: '8px', 
+                        overflow: 'hidden', 
+                        boxSizing: 'border-box', 
+                        padding: 0 
+                      }}>
+                        <th style={{ 
+                          maxHeight: '8px', 
+                          boxSizing: 'border-box', 
+                          background: 'white', 
+                          padding: '5px' 
+                        }}>Taxa (%)</th>
+                        <th style={{ 
+                          maxHeight: '8px', 
+                          boxSizing: 'border-box', 
+                          background: 'white', 
+                          padding: '5px' 
+                        }}>Incidência</th>
+                        <th style={{ 
+                          maxHeight: '8px', 
+                          boxSizing: 'border-box', 
+                          background: 'white', 
+                          padding: '5px' 
+                        }}>Total</th>
+                        <th style={{ 
+                          maxHeight: '8px', 
+                          boxSizing: 'border-box', 
+                          background: 'white', 
+                          padding: '5px' 
+                        }}>Motivo isenção</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {groupProdutosByTaxa?.()?.map((data, index) => (
+                        <tr key={index} style={{ 
+                          maxHeight: '8px', 
+                          overflow: 'hidden', 
+                          padding: 0, 
+                          borderBottom: 'none' 
+                        }}>
+                          <td style={{ 
+                            maxHeight: '8px', 
+                            boxSizing: 'border-box', 
+                            background: 'white', 
+                            padding: '5px', 
+                            borderBottom: 'none' 
+                          }}>{data?.taxa}</td>
+                          <td style={{ 
+                            maxHeight: '8px', 
+                            boxSizing: 'border-box', 
+                            background: 'white', 
+                            padding: '5px', 
+                            borderBottom: 'none' 
+                          }}>{formatCurrency1(data?.incidencia)}</td>
+                          <td style={{ 
+                            maxHeight: '8px', 
+                            boxSizing: 'border-box', 
+                            background: 'white', 
+                            padding: '5px', 
+                            borderBottom: 'none' 
+                          }}>{formatCurrency1(data?.total)}</td>
+                          <td style={{ 
+                            maxHeight: '8px', 
+                            boxSizing: 'border-box', 
+                            background: 'white', 
+                            padding: '5px', 
+                            borderBottom: 'none' 
+                          }}>{data?.motivo}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="totals" style={{ 
+                  backgroundColor: 'white', 
+                  border: 'none', 
+                  marginTop: '-20px' 
+                }}>
+                  <div className="totalRow">
+                    <span className="label">Total recebido:</span>
+                    <span className="value">
+                      {formatCurrency1(totalPagamentoValue?.('valor'))}
+                    </span>
+                  </div>
+                  <div className="totalRow1">
+                    <span className="label1">Crédito sobrando:</span>
+                    <span className="value">
+                      {formatCurrency1(
+                        (totalValue?.('total') - totalPagamentoValue?.('valor'))
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+        </>
     );
 };
 export default NovoDocumento;
