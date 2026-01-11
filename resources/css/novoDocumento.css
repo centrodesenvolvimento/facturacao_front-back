@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
 .pageHeader {
     background-color: white;
     display: flex;
@@ -284,7 +286,9 @@ label {
 }
 td, th {
     border-inline: none;
+    padding-block: .75rem;
 }
+
 .toastContainer {
     z-index: 99999 !important;
 
@@ -388,19 +392,34 @@ td, th {
     justify-content: flex-start;
     padding-inline: 20px;
     padding-bottom: 10px;
+    font-family: sans-serif;
 
 }
 #pdfContainer1 {
     flex: 1;
     display: flex;
     flex-direction: column;
-    /* display: none; */
+    display: none;
 
     justify-content: flex-start;
     padding-inline: 20px;
     padding-bottom: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px
 
 }
+.pdfLogo {
+    margin-bottom: 5px;
+}
+#pdfContainer1 th, #pdfContainer1 td {
+    padding-block: .75rem;
+    border-top: 1.6px solid #e3e7ec;
+
+}
+#pdfContainer1 th {
+    font-weight: 600;
+}
+
 #pdfContainerA3 {
     flex: 1;
     display: flex;
@@ -438,7 +457,9 @@ td, th {
     font-weight: 800;
     color: #2e405a;
 }
-.pdfHeaderRow .value {}
+.pdfHeaderRow {
+    font-size: 14px;
+}
 
 .qrContainer {
     background-color: white;

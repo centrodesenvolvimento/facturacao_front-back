@@ -279,7 +279,20 @@ const Dashboard = () => {
     const [filteredDocumentos, setFilteredDocumentos] = useState([]);
     const canAddNotaCredito = (data) => true; // placeholder
     const exportPDF = (data, type) => {}; // placeholder
-    const navigateToDetails = (data, emitirRecibo) => {}; // placeholder
+    const navigateToDetails = (data, recibo) => {
+        sessionStorage.setItem("factura", JSON.stringify(data));
+    sessionStorage.setItem(
+      "polo",
+      JSON.stringify(
+        empresa?.polos?.find((i) => i?.id == poloFilter)
+      )
+    );
+
+   
+    const url = "/v1/novo/documento" + (recibo ? "?recibo=adicionar" : "");
+
+    window.open(url, "_blank");
+    }; // placeholder
     const showItem = (visibleDocs, data, index) => true; // placeholder
     const [years, setYears] = useState([]);
     const [pages, setPages] = useState([]);
@@ -922,11 +935,7 @@ const Dashboard = () => {
                                                                                         "center",
                                                                                 }}
                                                                                 className="btn btn-sm btn-outline-primary"
-                                                                                onClick={() =>
-                                                                                    navigateToDetails(
-                                                                                        data
-                                                                                    )
-                                                                                }
+                                                                                
                                                                             >
                                                                                 <svg
                                                                                     xmlns="http://www.w3.org/2000/svg"

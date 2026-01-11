@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "../../css/novoDocumento.css";
 import Loading1 from "../components/loading1";
 import logo from "../../images/logo.jpeg";
-import { format, set } from "date-fns";
+import { format, parseISO, set } from "date-fns";
 import {
     Dialog,
     DialogContent,
@@ -22,6 +22,8 @@ import api from "../components/api";
 import { Bounce, toast, ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "../components/ui/alert-dialog"
+import { jsPDF } from "jspdf";
+
 
 const NovoDocumento = () => {
     const [load, setLoad] = useState(false);
@@ -202,17 +204,7 @@ const NovoDocumento = () => {
 
     const [loadingProdutos, setLoadingProdutos] = useState(false);
     useEffect(() => {
-        setSelectedProdutos(
-            JSON.parse(localStorage.getItem("facturaProdutos") || "[]")?.map(
-                (i, index) => {
-                    return {
-                        ...i,
-                        index: index + 1,
-                    };
-                }
-            )
-        );
-        setEmpresaImage(logo);
+        
         setLoadingProdutos(true);
         setLoadingClientes(true);
         api.get("/v1/artigos")
@@ -240,7 +232,7 @@ const NovoDocumento = () => {
                 );
                 setLoadingClientes(false);
                 setSelectedCliente(
-                    clientes?.find((i) => i?.id == factura()?.cliente_id)
+                    clientes?.find((i) => i?.id == factura?.cliente_id)
                 );
             })
             .catch((err) => {
@@ -265,6 +257,12 @@ const NovoDocumento = () => {
         setWebsite(fullUserPolo?.website || "");
         setTelefone(fullUserPolo?.telemovel || "");
         setEmail(fullUserPolo?.email || "");
+        
+        if (fullUserEmpresa?.logo) {
+          setEmpresaImage(`/storage/${fullUserEmpresa?.logo}`);
+        }else {
+          setEmpresaImage(logo)
+        }
     }, []);
 
     const extractPercentage = (item) => {
@@ -610,12 +608,261 @@ return;
         toastSuccess('Produto editado com sucesso!')
 
     }
-    const downloadMultipleDocs = () => {
+    const downloadMultipleDocs = async (upToIndex, type=null) => {
+      setLoad(true);
 
+    for (let i = 0; i < upToIndex; i++) {
+      setReplica(documentoConfigs[i]);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      await downloadDoc(i, type);
     }
-    const downloadDoc = () => {
-        
+
+    setLoad(false);
+  }
+const disableStylesheets = () => {
+  const disabledLinks = [];
+
+  Array.from(
+    document.querySelectorAll("link[rel='stylesheet']")
+  ).forEach((link) => {
+    // Only disable Tailwind / app styles
+    if (
+      link.href.includes("tailwind") ||
+      link.href.includes("index") ||
+      link.href.includes("app")
+    ) {
+      link.disabled = true;
+      disabledLinks.push(link);
     }
+  });
+
+  // Return restore function
+  return () => {
+    disabledLinks.forEach(link => {
+      link.disabled = false;
+    });
+  };
+};
+
+    const downloadDoc = (index = 0, type=null) => {
+    return new Promise(async (resolve, reject) => {
+      setLoad(true);
+
+      index == 3 && (await new Promise((resolve) => setTimeout(resolve, 1000)));
+
+      const isA4 = tipoFolha == "A4";
+      const isHorizontal = false;
+
+      const pages =
+        type == "recibo"
+          ? (document.getElementById("pdfContainerRecibo"))
+          : isA4
+          ? (document.getElementById("pdfContainer1"))
+          : (document.getElementById("pdfContainerA3"));
+
+      if (!pages) {
+        console.error("Element not found");
+        setLoad(false);
+        return;
+      }
+
+      // Save the original body overflow
+      const originalOverflow = document.body.style.overflow;
+
+      // Disable scrolling
+      document.body.style.overflow = "hidden";
+
+      // Clone the component
+      const clonedPages = pages.cloneNode(true);
+
+      // Create a mask overlay
+      const mask = document.createElement("div");
+      mask.style.position = "fixed";
+      mask.style.top = "0";
+      mask.style.left = "0";
+      mask.style.width = "100vw";
+      mask.style.height = "100vh";
+      mask.style.backgroundColor = "#F3F3F9"; // White mask
+      mask.style.zIndex = "-9998"; // Ensure it covers everything
+      mask.style.pointerEvents = "none"; // Allow interactions behind it
+
+      // Force cloned pages to be visible but off-screen
+      clonedPages.style.position = "absolute";
+      clonedPages.style.left = "0";
+      clonedPages.style.top = "0";
+
+      clonedPages.style.width = isA4 ? "1100px" : "2000px"; // Keep 100% width for PDF
+      clonedPages.style.minWidth = isA4 ? "1100px" : "2000px"; // Set minimum width (if needed)
+      clonedPages.style.maxWidth = isA4 ? "1100px" : "2000px";
+      // clonedPages.style.minHeight = "1550px";
+      // clonedPages.style.height = "1550px";
+      clonedPages.style.overflow = "visible"; // ✅ Very important
+      clonedPages.style.breakInside = "avoid"; // Optional
+      clonedPages.style.backgroundColor = "white";
+
+      clonedPages.style.display = "flex";
+      clonedPages.style.opacity = "1";
+      clonedPages.style.zIndex = "-9999"; // Keep it hidden from the user
+
+      document.body.appendChild(clonedPages); // Append off-screen for rendering
+      document.body.appendChild(mask); // Add the mask to hide UI flicker
+      console.log('got here')
+      setTimeout(() => {
+        const doc = new jsPDF({
+          orientation: isA4 ? "portrait" : "landscape",
+          unit: "px",
+          format: isA4 ? "a4" : "a3",
+        });
+
+        const pageWidth = doc.internal.pageSize.getWidth(); // A4 full width
+        const originalContentWidth = isA4 ? 1100 : 2000; // width of your HTML content
+
+        const pageHeight = doc.internal.pageSize.getHeight(); // A4 full height
+        const contentHeight = clonedPages.scrollHeight;
+        console.log(
+          "content heighttttttt==============================================================================",
+          contentHeight
+        );
+
+        // Adjust the scale based on the content size
+        const scale = pageWidth / originalContentWidth; // This will scale down width only
+        console.log("scaleee", scale);
+        console.log("page width and height", pageWidth, pageHeight);
+        const expectedPages = Math.ceil(
+          (contentHeight * scale + 50) / pageHeight
+        );
+        console.log("no ceil", (contentHeight * scale + 50) / pageHeight);
+        console.log("expected pages", expectedPages);
+const restoreStyles = disableStylesheets();
+
+        doc.html(clonedPages, {
+          x: 0, // Start from the left edge
+          y: 0, // Start from the top edge
+          html2canvas: {
+            // scale: scale, // Use calculated scale to fit
+            scale: scale,
+            // width: pageWidth, // Full width of page
+            // height: pageHeight, // Full height of page
+            // windowWidth: clonedPages.scrollWidth, // Full width of the rendered content
+
+            letterRendering: true,
+            useCORS: true,
+            windowWidth: originalContentWidth,
+            // height: contentHeight,
+            height: clonedPages.scrollHeight,
+            windowHeight: 100,
+            scrollY: 0,
+            scrollX: 0,
+            onclone: (clonedDoc) => {
+      const styles = clonedDoc.querySelectorAll("style, link[rel='stylesheet']");
+
+      styles.forEach(style => {
+        if (style.textContent?.includes("oklch")) {
+          style.remove();
+        }
+      });
+
+      clonedDoc.body.style.backgroundColor = "#ffffff";
+      clonedDoc.body.style.color = "#000000";
+    }
+  
+          },
+          autoPaging: "text",
+          callback: (doc) => {
+            restoreStyles()
+            let totalPages = doc.getNumberOfPages();
+
+            // Update total pages after deletion
+            totalPages = doc.getNumberOfPages();
+            let lastContentPage = 1;
+
+            for (let i = 1; i <= totalPages; i++) {
+              doc.setPage(i);
+
+              const pageWidth = doc.internal.pageSize.getWidth();
+              const pageHeight = doc.internal.pageSize.getHeight();
+
+              doc.setFontSize(6);
+
+              // Bottom LEFT text
+              // doc.text(
+              //   `Os bens/serviços foram colocados à disposição do adquirente na data de ${format(
+              //     parseISO(this.responseDoc()?.created_at),
+              //     "dd-MM-yyyy"
+              //   )}`,
+              //   10,
+              //   pageHeight - 20
+              // ); // X=10 for left margin
+
+              doc.text(
+                type == "recibo"
+                  ? `${
+                      responseDoc?.recibo_hash?.[0] +
+                      responseDoc?.recibo_hash?.[11] +
+                      responseDoc?.recibo_hash?.[21] +
+                      responseDoc?.recibo_hash?.[31]
+                    }-Processado por programa validado nº ###/AGT/2025 Level-Invoice`
+                  : `${
+                      responseDoc?.hash?.[0] +
+                      responseDoc?.hash?.[11] +
+                      responseDoc?.hash?.[21] +
+                      responseDoc?.hash?.[31]
+                    }-Processado por programa validado nº ###/AGT/2025 Level-Invoice` +
+                      " | " +
+                      `Os bens/serviços foram colocados à disposição do adquirente na data de ${format(
+                        parseISO(responseDoc?.created_at),
+                        "dd-MM-yyyy"
+                      )}`,
+                10,
+                pageHeight - 10
+              );
+
+              // Bottom RIGHT text
+              const pageLabel = `Página ${i}/${expectedPages}`;
+              const textWidth = doc.getTextWidth(pageLabel);
+              doc.text(pageLabel, pageWidth - 10 - textWidth, pageHeight - 10); // Right aligned with 10px margin
+              lastContentPage = i; // ✅ mark this as last real content page
+            }
+
+            document.body.removeChild(clonedPages);
+            document.body.removeChild(mask); // Remove mask
+            document.body.style.overflow = originalOverflow; // Restore body overflow
+
+            // this.loading.set(false); // Hide loading state
+            
+            toastSuccess(`Documento ${documentoConfigs[index]} exportado com sucesso`)
+
+            console.log("lastttt contentttttt", lastContentPage);
+            const totalPagesAfterFooter = doc.getNumberOfPages();
+
+            for (let i = totalPages; i > expectedPages; i--) {
+              doc.deletePage(i);
+            }
+            // Open PDF in a new tab
+            const pdfBlobUrl = doc.output("bloburl");
+            // index == 0 && window.open(pdfBlobUrl, "_blank");
+            doc.save(
+              `${
+                tipoDocumento == "Factura" &&
+                type == "recibo"
+                  ? "Recibo__"
+                  : ""
+              }${
+                responseDoc?.tipoDocumento +
+                " Nº " +
+                responseDoc?.numeroDocumento
+              }___${documentoConfigs[index]}.pdf`
+            );
+            index == 3 && setLoad(false);
+
+            resolve();
+          },
+          // autoPaging: 'text',
+        });
+      }, 1); // Allow rendering time
+    });
+  }
     const setResponseDocFun = (type) => {
         if (tipo == "factura") {
       setNotaParamBypass(true);
@@ -744,7 +991,7 @@ const getTotalPages = () => {
     const lastItemIndex = lastPageItemCount;
     return lastItemIndex;
   }
-  
+  const [tipoFolha, setTipoFolha] = useState("A4");
   const getPageBreakHeight = (index) => {
     if (index > 17 && (index - 17 + 1) % 31 === 0) {
       return '76px';
@@ -794,6 +1041,127 @@ const getTotalPages = () => {
       })
       .sort((a, b) => parseFloat(a?.taxa) - parseFloat(b?.taxa));
   }
+  const goBack = () => {
+    window.history.go(-1)
+  }
+  const [notaCredito, setNotaCredito] = useState(null);
+
+  useEffect(() => {
+    const currentUser = JSON.parse(sessionStorage.getItem("currentUser") || "null");
+    setTipoFolha(currentUser?.tipoFolha || "A4");
+        let factura = null;
+    if (sessionStorage.getItem("factura")) {
+      // Check for query params (React Router)
+      const searchParams = new URLSearchParams(location.search);
+      
+      if (searchParams.get("recibo")) {
+        setReciboParam(true);
+        setTimeout(() => {
+          // Scroll logic (you'll need to adapt this for React)
+          // this.divs.forEach((div) => {
+          //   if (
+          //     div.nativeElement.textContent?.trim().toLowerCase() ===
+          //     "pagamentos"
+          //   ) {
+          //     div.nativeElement.scrollIntoView({
+          //       behavior: "smooth",
+          //       block: "start",
+          //     });
+          //   }
+          // });
+        }, 1000);
+      }
+
+      if (searchParams.get("nota")) {
+        setNotaParam(true);
+      }
+      factura = JSON.parse(sessionStorage.getItem("factura") || "{}");
+      setNotaCredito(factura?.nota_credito || null);
+      if (factura?.factura_id) {
+        setNotaParam(true);
+        setDone(true);
+      }
+      setFactura(factura)
+    }
+    //if notaparam state is true
+
+    if (factura?.factura_id >= 0) {
+      setTipoNota(factura?.tipoDocumento)
+      setDocumentoOrigem(factura?.factura?.numeroDocumento)
+      setDataNota(format(new Date(factura?.dataEmissao), "yyyy-MM-dd"))
+      setMotivo(factura?.obs || "")
+    }
+    if (factura){
+      setResponseDoc(factura)
+      const polo = JSON.parse(sessionStorage.getItem("polo") || "{}");
+      setLocalizacao(polo?.localizacao || "")
+      setDataEmissao(format(new Date(factura?.dataEmissao), "yyyy-MM-dd"))
+      setDataValidade(format(new Date(factura?.dataValidade), "yyyy-MM-dd"))
+      setTipoDocumento(factura?.tipoDocumento)
+      setMoeda(factura?.moeda)
+      setNotas(factura?.obs)
+
+      const facturaProdutos = [...(factura?.produtos || [])].map((i, index) => {
+        return {
+          ...i,
+          index: index + 1
+        }
+      })
+      setSelectedProdutos(facturaProdutos.concat(facturaProdutos.concat(facturaProdutos.concat(facturaProdutos.concat(facturaProdutos)).concat(facturaProdutos.concat(facturaProdutos)))));
+      const facturaPagamentos = [...(factura?.pagamentos || [])].map(pagamento => ({
+        banco: pagamento?.banco || "",
+        tipoPagamento: pagamento?.tipoPagamento || "",
+        valor: pagamento?.valor || 0,
+        dataPagamento: pagamento?.valor?.length > 0 ||
+                      pagamento?.tipoPagamento ||
+                      pagamento?.referencia?.length > 0 ||
+                      pagamento?.banco?.length > 0
+          ? format(new Date(pagamento?.dataPagamento), "yyyy-MM-dd")
+          : format(new Date(), "yyyy-MM-dd"),
+        referencia: pagamento?.referencia || "",
+        disabled: pagamento?.valor?.length > 0 ||
+                  pagamento?.tipoPagamento ||
+                  pagamento?.referencia?.length > 0 ||
+                  pagamento?.banco?.length > 0,
+      }));
+      setPayments(facturaPagamentos);
+
+
+      
+    }else {
+      setSelectedProdutos(
+            JSON.parse(localStorage.getItem("facturaProdutos") || "[]")?.map(
+                (i, index) => {
+                    return {
+                        ...i,
+                        index: index + 1,
+                    };
+                }
+            )
+        );
+    }
+
+    
+  }, [])
+  useEffect(() => {
+    const patchHtml2CanvasColor = () => {
+  const w = window;
+
+  if (w.html2canvas?.Color?.parse) {
+    const originalParse = w.html2canvas.Color.parse;
+
+    w.html2canvas.Color.parse = function (color) {
+      if (typeof color === "string" && color.includes("oklch")) {
+        return originalParse("#000000"); // fallback
+      }
+      return originalParse(color);
+    };
+  }
+};
+
+// Call once (e.g. in useEffect or before export)
+patchHtml2CanvasColor();
+  }, [])
     const HeaderTemplateRecibo = () => {
   return (
     <>
@@ -2489,7 +2857,7 @@ const HeaderTemplate = () => {
             </PopoverTrigger>
 
             <PopoverContent className="tableOptions">
-              {factura() ? (
+              {factura ? (
                 <div
                   className="dropdown-item d-flex align-items-center"
                   onClick={() => {
@@ -3226,7 +3594,7 @@ const HeaderTemplate = () => {
                             {replica}
                           </th>
                         </tr>
-                        <tr style={{ backgroundColor: 'white', fontWeight: '900' }}>
+                        <tr style={{ backgroundColor: 'white', fontWeight: '500' }}>
                           <th style={{ backgroundColor: 'white' }}>Data Emi.</th>
                           <th style={{ backgroundColor: 'white' }}>Data Val.</th>
                           <th style={{ backgroundColor: 'white' }}>NIF.</th>
