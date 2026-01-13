@@ -409,7 +409,7 @@ td, th {
 
 }
 .pdfLogo {
-    margin-bottom: 5px;
+    margin-bottom: 0.5px;
 }
 #pdfContainer1 th, #pdfContainer1 td {
     padding-block: .75rem;

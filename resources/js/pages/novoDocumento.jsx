@@ -1093,6 +1093,7 @@ const getTotalPages = () => {
     }
     if (factura){
       setResponseDoc(factura)
+      console.trace('factura loaded', factura);
       const polo = JSON.parse(sessionStorage.getItem("polo") || "{}");
       setLocalizacao(polo?.localizacao || "")
       setDataEmissao(format(new Date(factura?.dataEmissao), "yyyy-MM-dd"))
@@ -1143,25 +1144,25 @@ const getTotalPages = () => {
 
     
   }, [])
-  useEffect(() => {
-    const patchHtml2CanvasColor = () => {
-  const w = window;
+//   useEffect(() => {
+//     const patchHtml2CanvasColor = () => {
+//   const w = window;
 
-  if (w.html2canvas?.Color?.parse) {
-    const originalParse = w.html2canvas.Color.parse;
+//   if (w.html2canvas?.Color?.parse) {
+//     const originalParse = w.html2canvas.Color.parse;
 
-    w.html2canvas.Color.parse = function (color) {
-      if (typeof color === "string" && color.includes("oklch")) {
-        return originalParse("#000000"); // fallback
-      }
-      return originalParse(color);
-    };
-  }
-};
+//     w.html2canvas.Color.parse = function (color) {
+//       if (typeof color === "string" && color.includes("oklch")) {
+//         return originalParse("#000000"); // fallback
+//       }
+//       return originalParse(color);
+//     };
+//   }
+// };
 
-// Call once (e.g. in useEffect or before export)
-patchHtml2CanvasColor();
-  }, [])
+// // Call once (e.g. in useEffect or before export)
+// patchHtml2CanvasColor();
+//   }, [])
     const HeaderTemplateRecibo = () => {
   return (
     <>
@@ -2945,7 +2946,7 @@ const HeaderTemplate = () => {
               <PopoverTrigger>
                 <button
                   className="btn btn-outline-primary"
-                  onClick={() => setResponseDoc("factura")}
+                  onClick={() => setResponseDocFun("factura")}
                 >
                   <i className="ri-settings-4-line me-1"></i>
                   Exportar Nova Factura
