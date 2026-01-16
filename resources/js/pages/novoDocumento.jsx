@@ -1645,7 +1645,7 @@ const HeaderTemplate = () => {
 
     return (
         <>
-        <div className="dashboardContainer" style={{ background: "#f6f6f6ff" }}>
+        <div className="dashboardContainer" style={{ background: "white" }}>
             <AlertDialog open={removeOpen} onOpenChange={setRemoveOpen}>
                                 
                                 <AlertDialogContent style={{flexDirection: 'column', display: 'flex', alignItems: 'center', textAlign: 'center'}}>

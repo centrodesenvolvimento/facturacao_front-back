@@ -10,15 +10,26 @@ const Loading1 = ({loading}) => {
             {
                 loading && <AlertDialog open={true}>
                     
-                    <AlertDialogContent style={{flexDirection: 'column', display: 'flex', alignItems: 'center', textAlign: 'center'}}>
+                    <AlertDialogContent style={{flexDirection: 'column', display: 'flex', alignItems: 'center', textAlign: 'center', padding: 50, maxWidth: 350}}>
                     <div style={{display: 'none'}}>
                         <AlertDialogTitle></AlertDialogTitle>
                     </div>
-                    <Lottie rendererSettings={
-        {
-            preserveAspectRatio: 'xMidYMid slice'
-        }
-        } autoplay loop animationData={loadingAnimation} height={400} width={400}/>
+                    <div
+                                        className="spinner-border text-primary"
+                                        role="status"
+                                        style={{
+                                            margin: "auto",
+                                            marginTop: 20,
+                                            width: 200,
+                                            height: 200,
+                                            borderWidth: 10,
+                                            
+                                        }}
+                                    >
+                                        <span className="sr-only">
+                                            Loading...
+                                        </span>
+                                    </div>
                     </AlertDialogContent>
                 </AlertDialog>
             }
