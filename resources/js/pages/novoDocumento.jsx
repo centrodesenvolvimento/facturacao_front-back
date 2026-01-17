@@ -124,7 +124,7 @@ const NovoDocumento = () => {
             .map((i, index) => {
                 return {
                     ...i,
-                    index: index,
+                    index: index + 1,
                 };
             });
     };
@@ -204,7 +204,7 @@ const NovoDocumento = () => {
 
     const [loadingProdutos, setLoadingProdutos] = useState(false);
     useEffect(() => {
-        
+      
         setLoadingProdutos(true);
         setLoadingClientes(true);
         api.get("/v1/artigos")
@@ -231,15 +231,25 @@ const NovoDocumento = () => {
                         
                 );
                 setLoadingClientes(false);
+                
                 setSelectedCliente(
-                    clientes?.find((i) => i?.id == factura?.cliente_id)
+                    [
+                        {
+                            id: null,
+                            nome: "Consumidor Final",
+                        },
+                    ]
+                        .concat(
+                            [...res.data].filter((i) => i?.status == "activo")
+                        )?.find((i) => i?.id == factura?.cliente_id)
                 );
+                console.trace('selectedd', factura?.cliente_id, selectedCliente, clientes)
             })
             .catch((err) => {
                 console.log('error fetching clients', err);
                 setLoadingClientes(false);
             });
-    }, []);
+    }, [factura]);
     useEffect(() => {
         const fullUserEmpresa = JSON.parse(
             sessionStorage.getItem("fullUserEmpresa") || "{}"
@@ -628,9 +638,12 @@ const disableStylesheets = () => {
   ).forEach((link) => {
     // Only disable Tailwind / app styles
     if (
-      link.href.includes("tailwind") ||
-      link.href.includes("index") ||
-      link.href.includes("app")
+      // link.href.includes("tailwind")
+      // link.href.includes("index") ||
+      // link.href.includes("app")
+      false
+
+      
     ) {
       link.disabled = true;
       disabledLinks.push(link);
@@ -720,15 +733,11 @@ const disableStylesheets = () => {
 
         const pageHeight = doc.internal.pageSize.getHeight(); // A4 full height
         const contentHeight = clonedPages.scrollHeight;
-        console.log(
-          "content heighttttttt==============================================================================",
-          contentHeight
-        );
+        
 
         // Adjust the scale based on the content size
         const scale = pageWidth / originalContentWidth; // This will scale down width only
-        console.log("scaleee", scale);
-        console.log("page width and height", pageWidth, pageHeight);
+        
         const expectedPages = Math.ceil(
           (contentHeight * scale + 50) / pageHeight
         );
@@ -1108,7 +1117,7 @@ const getTotalPages = () => {
           index: index + 1
         }
       })
-      setSelectedProdutos(facturaProdutos.concat(facturaProdutos.concat(facturaProdutos.concat(facturaProdutos.concat(facturaProdutos)).concat(facturaProdutos.concat(facturaProdutos)))));
+      setSelectedProdutos(facturaProdutos);
       const facturaPagamentos = [...(factura?.pagamentos || [])].map(pagamento => ({
         banco: pagamento?.banco || "",
         tipoPagamento: pagamento?.tipoPagamento || "",
@@ -1125,7 +1134,7 @@ const getTotalPages = () => {
                   pagamento?.referencia?.length > 0 ||
                   pagamento?.banco?.length > 0,
       }));
-      setPayments(facturaPagamentos);
+      setPayments(facturaPagamentos.concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).slice(0, 15));
 
 
       
@@ -1299,8 +1308,8 @@ const getTotalPages = () => {
               <th>Data Emi.</th>
               <th>NIF.</th>
               <th>V/ Ref.</th>
-              <th style={{ backgroundColor: "#FAFBFD" }}>Documento ref.</th>
-              <th style={{ backgroundColor: "#FAFBFD" }}>Valor doc.</th>
+              <th>Documento ref.</th>
+              <th>Valor doc.</th>
               <th style={{ width: "220px" }}></th>
             </tr>
           </thead>
@@ -1328,12 +1337,12 @@ const getTotalPages = () => {
                   : responseDoc?.numeroRecibo}
               </td>
 
-              <td style={{ backgroundColor: "#FAFBFD" }}>
-                {responseDoc?.factura?.numeroDocumento}
+              <td >
+                {responseDoc?.numeroDocumento}
               </td>
 
-              <td style={{ backgroundColor: "#FAFBFD" }}>
-                {totalValue("total")}
+              <td >
+                {formatCurrency(totalValue("total"))}
               </td>
 
               <td rowSpan={2} style={{border: 'none'}}>
@@ -2695,7 +2704,7 @@ const HeaderTemplate = () => {
                                             Pagamento {i + 1}
                                         </div>
                                         <button
-                                            style={{ width: 40, height: 40 }}
+                                            style={{ width: 40, height: 40, paddingRight: 0 }}
                                             type="button"
                                             className="btn btn-danger"
                                             disabled={item.disabled || i === 0}
@@ -3715,11 +3724,7 @@ const HeaderTemplate = () => {
                                 <td>
                                   <div
                                     style={{
-                                      display: '-webkit-box',
-                                      WebkitLineClamp: 1,
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      WebkitBoxOrientation: 'vertical',
+                                      
                                       border: 'none'
                                     }}
                                     title={data?.produto?.designacao}
@@ -4161,6 +4166,347 @@ const HeaderTemplate = () => {
               </div>
             </>
           )}
+        </div>
+      </div>
+    </div>
+
+
+
+    <div id="pdfContainerRecibo">
+      <div style={{
+        backgroundColor: 'white',
+        gap: '10px',
+        width: '100%',
+        height: '100%',
+        padding: '20px',
+        paddingTop: '60px'
+      }}>
+        <div className="pdfHeader">
+          {getTotalPagesRecibos().map((page, pageIndex) => (
+            <React.Fragment key={pageIndex}>
+              {true ? (
+                <>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    paddingTop: '5px'
+                  }}>
+                    <div className="pdfLogo">
+                      <img
+              src={empresaImage ||
+                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1769040000&v=beta&t=bIEZ01l0aSWRCzKkaO_eYQP_uPVOc4qTSFzuL4zkg9o"}
+              className="logo"
+            />
+                    </div>
+                  </div>
+
+                  <div className="pdfCompanyTitle" style={{ marginTop: '20px' }}>
+                    {empresa?.nome_empresa}
+                  </div>
+                  
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginTop: '10px'
+                  }}>
+                    <div className="pdfCompanyInfo" style={{ flex: 1 }}>
+                      <div className="pdfHeaderRow">
+                        <span className="label">Localização: </span>
+                        <span className="value">{localizacao}</span>
+                      </div>
+                      <div className="pdfHeaderRow">
+                        <span className="label">NIF: </span>
+                        <span className="value">{nif}</span>
+                      </div>
+                      {website && website !== '' && (
+                        <div className="pdfHeaderRow">
+                          <span className="label">Website: </span>
+                          <span className="value">{website}</span>
+                        </div>
+                      )}
+                      <div className="pdfHeaderRow">
+                        <span className="label">Email: </span>
+                        <span className="value">{email}</span>
+                      </div>
+                      <div className="pdfHeaderRow">
+                        <span className="label">Tel: </span>
+                        <span className="value">{telefone}</span>
+                      </div>
+                    </div>
+
+                    <div className="pdfClientInfo" style={{ flex: 1 }}>
+                      <div className="pdfHeaderRow">
+                        <span className="label">Cliente: </span>
+                        <span className="value">
+                          {selectedCliente?.nome || "Consumidor Final"}
+                        </span>
+                      </div>
+                      <div className="pdfHeaderRow">
+                        <span className="label">NIF: </span>
+                        <span className="value">{selectedCliente?.nif || "N/A"}</span>
+                      </div>
+                      <div className="pdfHeaderRow">
+                        <span className="label">Localização: </span>
+                        <span className="value">
+                          {selectedCliente?.localizacao || "N/A"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className="table-responsive"
+                    style={{
+                      height: '100%',
+                      paddingBottom: '80px',
+                      overflowY: 'hidden',
+                      marginTop: '50px'
+                    }}
+                  >
+                    <table className="table table-gridjs" style={{ backgroundColor: 'white' }}>
+                      <thead style={{ backgroundColor: 'white' }}>
+                        <tr style={{ backgroundColor: 'white' }}>
+                          <th colSpan="5" style={{
+                            fontWeight: 700,
+                            fontSize: '18px',
+                            backgroundColor: 'white',
+                            borderTop: 'none'
+                          }}>
+                            {`Recibo Nº ${responseDoc?.numeroRecibo}`}
+                          </th>
+                          <th style={{
+                            fontSize: '13px',
+                            backgroundColor: 'white',
+                            borderTop: 'none',
+                            textAlign: 'right',
+                            fontWeight: 600
+                          }}>
+                            {replica}
+                          </th>
+                        </tr>
+                        <tr style={{ backgroundColor: 'white', fontWeight: '500' }}>
+                          <th style={{ backgroundColor: 'white' }}>Data Emi.</th>
+                          <th style={{ backgroundColor: 'white' }}>NIF</th>
+                          <th style={{ backgroundColor: 'white' }}>V/ Ref.</th>
+                          <th style={{ backgroundColor: 'white' }}>Documento ref..</th>
+                          <th style={{ backgroundColor: 'white' }}>Valor doc.</th>
+                          <th style={{ backgroundColor: 'white', maxWidth: '220px', width: '220px' }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>{format(new Date(responseDoc?.dataEmissaoRecibo), 'dd-MM-yyyy')}</td>
+                          {/* <td>
+                            {tipoDocumento === 'Factura Recibo' ? 'N/A' : format(new Date(dataValidade?.length > 0 ? dataValidade : null), 'dd-MM-yyyy')}
+                          </td> */}
+                          <td>
+                            {selectedCliente?.nif || "N/A"}
+                          </td>
+                          <td>
+                            {responseDoc?.numeroRecibo}
+                          </td>
+                          <td>
+                            {responseDoc?.numeroDocumento}
+                          </td>
+                          <td>
+                            {formatCurrency(totalValue?.('total'))}
+                          </td>
+                          <td rowSpan={2} style={{border: 'none'}}>
+                <div
+                  className="qrContainer"
+                  style={{
+                    padding: 0,
+                    height: "80px",
+                    transform: "translateY(-55px)",
+                  }}
+                >
+                  <img
+                    src={responseDoc?.qr_code_recibo}
+                    style={{
+                      width: "100%",
+                      height: "220px",
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
+              </td>
+                        </tr>
+
+                        <tr>
+                          <td colSpan="4" style={{ borderBottom: 'none' }}>
+                            <section style={{ flex: 1 }}>
+                              {(tipoDocumento === 'Factura Recibo' || tipoDocumento === 'Factura') ? (
+                                <>
+                                 
+                                  {true && (
+                                    <>
+                                      <div style={{ fontWeight: 800 }}>Obs:</div>
+                                      <div style={{ maxHeight: '25px' }}>
+                                        Através do(s) seguinte(s) meio(s) no valor total de {formatCurrency(totalPagamentoValue("valor"))}
+                                      </div>
+                                    </>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  <div style={{ fontWeight: 800 }}>Obs:</div>
+                                  <div style={{ maxHeight: '25px' }}>
+                                    Este documento não serve de factura. <br />
+                                    {notas}
+                                  </div>
+                                </>
+                              )}
+                            </section>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              ) : (
+                HeaderTemplateRecibo()
+              )}
+
+              <div
+                className="table-responsive"
+                style={{
+                  height: '100%',
+                  paddingBottom: '80px',
+                  overflowY: 'hidden',
+                  marginTop: '-15px'
+                }}
+              >
+                <table className="table table-gridjs" style={{ backgroundColor: 'white' }}>
+                  <thead style={{ background: 'white' }}>
+                    <tr style={{ backgroundColor: 'white' }}>
+                      <th style={{ maxWidth: '20px', width: '20px', backgroundColor: 'white' }}>#</th>
+                      <th style={{ backgroundColor: 'white' }}>Forma de pag.</th>
+                      <th style={{ backgroundColor: 'white' }}>Banco</th>
+                      <th style={{ backgroundColor: 'white' }}>Data</th>
+                      <th style={{ backgroundColor: 'white' }}>Ref. do pag..</th>
+                      <th style={{ backgroundColor: 'white' }}>Valor</th>
+                      {/* <th style={{ backgroundColor: 'white' }}>Total</th> */}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredPagamentos(payments)?.length > 0 && 
+                      filteredPagamentos(payments)
+                        .slice((pageIndex * itemsPerPage), (pageIndex * itemsPerPage) + itemsPerPage)
+                        .map((data, index) => {
+                          const globalIndex = index;
+                          const isLastPage = pageIndex + 1 === getTotalPagesRecibos().length;
+                          const isLastProduct = data?.index == filteredPagamentos(payments).length;
+                          console.log(';lasjfdlkjdf', isLastPage, isLastProduct)
+                          return (
+                            <React.Fragment key={index}>
+                              <tr>
+                                <td>
+                                  <div>{data?.index + ''}</div>
+                                </td>
+                                <td>
+                                  <div
+                                    style={{
+                                      
+                                      border: 'none'
+                                    }}
+                                    title={data?.tipoPagamento||"-"}
+                                  >
+                                    {data?.tipoPagamento||"-"}
+                                  </div>
+                                </td>
+                                <td>
+                                  <div>{data?.banco||"-"}</div>
+                                </td>
+                                <td>
+                                  <div>{data?.dataPagamento ? format(new Date(data?.dataPagamento), 'dd/MM/yyy')  : "-"}</div>
+                                </td>
+                                <td>
+                                  <div>{data?.referencia||"-"}</div>
+                                </td>
+                                <td>
+                                  <div>
+                                    {data?.valor ? formatCurrency(data?.valor)  : "AOA 0"}
+                                  </div>
+                                </td>
+                                
+                              </tr>
+
+                              {((globalIndex + 1) === 17 || (globalIndex > 18 && ((globalIndex - 17 + 1) % 31 === 0))) && (
+                                <tr style={{ 
+                                  border: 'none',
+                                  height: (globalIndex > 17 && ((globalIndex - 17 + 1) % 31 === 0)) ? '76px' : '56px'
+                                }}>
+                                  <td style={{ border: 'none' }} colSpan="18" className="page-break">
+                                    <div style={{ pageBreakAfter: 'always' }}></div>
+                                  </td>
+                                </tr>
+                              )}
+
+                              {isLastPage && isLastProduct && (index + 1 === 14 || index + 1 === 15 || index + 1 === 16) && (
+                                <tr style={{ 
+                                  border: 'none',
+                                  height: index + 1 === 14 ? '194px' 
+                                        : index + 1 === 15 ? '146px'
+                                        : '100px'
+                                }}>
+                                  <td style={{ border: 'none' }} colSpan="18" className="page-break">
+                                    <div style={{ pageBreakAfter: 'always' }}></div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        })
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </React.Fragment>
+          ))}
+
+          {[14, 15, 16, 17].includes(getLastPageProductIndexRecibos()) && (
+            HeaderTemplateRecibo()
+          )}
+
+          <div className="bottom" style={{ 
+            marginTop: [14, 15, 16, 17].includes(getLastPageProductIndexRecibos()) ? '-20px' : '-55px'
+          }}>
+           
+            <div style={{ flex: 1 }}></div>
+            
+
+            <div className="totals" style={{ 
+              backgroundColor: 'white', 
+              border: 'none', 
+              marginTop: '-20px' 
+            }}>
+              <div className="totalRow">
+                <span className="label">Total a pagar:</span>
+                <span className="value">
+                  {formatCurrency(
+                    totalValue?.('total')
+                  )}
+                </span>
+              </div>
+              <div className="totalRow">
+                <span className="label">Total recebido:</span>
+                <span className="value">
+                  {formatCurrency(totalPagamentoValue?.('valor'))}
+                </span>
+              </div>
+              
+              <div className="totalRow1">
+                <span className="label1">Crédito sobrando:</span>
+                <span className="value">
+                  {formatCurrency(totalValue?.('total') - totalPagamentoValue('valor'))}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          
         </div>
       </div>
     </div>

@@ -409,14 +409,15 @@ td, th {
 
 }
 .pdfLogo {
-    margin-bottom: 0.5px;
+    margin-bottom: -12px;
 }
-#pdfContainer1 th, #pdfContainer1 td {
+#pdfContainer1 th, #pdfContainer1 td, #pdfContainerRecibo th, #pdfContainerRecibo td {
     padding-block: .75rem;
     border-top: 1.6px solid #e3e7ec;
 
 }
-#pdfContainer1 th {
+
+#pdfContainer1 th, #pdfContainerRecibo th {
     font-weight: 600;
 }
 
@@ -437,10 +438,12 @@ td, th {
     display: flex;
     flex-direction: column;
     display: none;
-    
+
     justify-content: flex-start;
     padding-inline: 20px;
     padding-bottom: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px
 
 }
 #pdfContent {

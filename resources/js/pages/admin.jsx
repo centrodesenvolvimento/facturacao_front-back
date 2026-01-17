@@ -64,6 +64,7 @@ const Admin = () => {
     const [messages, setMessages] = useState([]);
     const [otherAccounts, setOtherAccounts] = useState([]);
     const [load, setLoad] = useState(false);
+    const [open, setOpen] = useState(false)
     const signup = () => {};
     const updateUser = (payload) => {
         let user = JSON.parse(sessionStorage.getItem("currentUser"));
@@ -251,7 +252,9 @@ const Admin = () => {
                             alignItems: "center",
                         }}
                     >
-                        <Popover>
+                        <Popover open={open} onOpenChange={(e) => {
+                            setOpen(e)
+                        }}>
                             <PopoverTrigger>
                                 <div className="profilepic">
                                     {name?.[0]}
@@ -317,6 +320,9 @@ const Admin = () => {
                                     }}
                                 >
                                     <SheetTrigger
+                                    onClick={(e) => {
+                                        // setOpen(false)
+                                    }}
                                         style={{
                                             width: "100%",
                                             outline: "none",
@@ -868,7 +874,7 @@ const Admin = () => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <section className="section">
+                                                <section className="section" style={{display: 'flex', flexDirection: 'column'}}>
                                                     <div className="sectionHeader">
                                                         <svg
                                                             xmlns="http://www.w3.org/2000/svg"

@@ -170,6 +170,7 @@
     max-width: 450px;
     width: 100%;
     overflow-y: scroll;
+    z-index: 1000;
 }
 
 .profileSheet .profileHeader {
