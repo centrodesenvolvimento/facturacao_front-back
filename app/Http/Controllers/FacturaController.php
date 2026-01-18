@@ -535,18 +535,32 @@ class FacturaController extends Controller
         $jsonData = json_encode($facturaData);
         $encodedData = urlencode(base64_encode($jsonData));
 
-        $invoiceUrl = 'localhost:4200/documentos/validar?data=' . $encodedData;
+        $invoiceUrl = 'localhost:8000/v1/documentos/validar?data=' . $encodedData;
 
 
-        $qrCodeBinary = QrCode::format('svg')->size(200)->generate($invoiceUrl);
+//         $qrCodeBinary = QrCode::format('svg')->size(200)->generate($invoiceUrl);
 
-$qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode(string: $qrCodeBinary);
+// $qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode(string: $qrCodeBinary);
 
-        $factura->qr_code = $qrCodeBase64;
-        $filePath = storage_path('app/public/test_qr.svg');
-        file_put_contents($filePath, $qrCodeBinary);
+//         $factura->qr_code = $qrCodeBase64;
+$context = stream_context_create([
+    'ssl' => [
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+    ]
+]);
+$png = file_get_contents(
+    'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='
+    . urlencode($invoiceUrl),
+    false,
+    $context
+);
 
-        $factura->qr_code = $qrCodeBase64;
+$factura->qr_code = 'data:image/png;base64,' . base64_encode($png);
+        // $filePath = storage_path('app/public/test_qr.svg');
+        // file_put_contents($filePath, $qrCodeBinary);
+
+        // $factura->qr_code = $qrCodeBase64;
 
         $factura->save();
 
@@ -888,12 +902,26 @@ $qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode(string: $qrCodeBina
             $jsonData = json_encode($facturaData);
             $encodedData = urlencode(base64_encode($jsonData));
 
-            $invoiceUrl = 'localhost:4200/documentos/validar?data=' . $encodedData;
+            $invoiceUrl = 'localhost:8000/v1/documentos/validar?data=' . $encodedData;
 
 
-            $qrCodeBinary = QrCode::format('svg')->size(200)->generate($invoiceUrl);
+//             $qrCodeBinary = QrCode::format('svg')->size(200)->generate($invoiceUrl);
 
-$qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrCodeBinary);
+// $qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrCodeBinary);
+$context = stream_context_create([
+    'ssl' => [
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+    ]
+]);
+$png = file_get_contents(
+    'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='
+    . urlencode($invoiceUrl),
+    false,
+    $context
+);
+
+$qrCodeBase64 = 'data:image/png;base64,' . base64_encode($png);
 
 
             $factura->update([

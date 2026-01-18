@@ -35,6 +35,7 @@ const NovoDocumento = () => {
     const [polo, setPolo] = useState(null);
     const [notaTipo, setNotaTipo] = useState("");
     const [documentoOrigem, setDocumentoOrigem] = useState("");
+    const [byPassRecibo, setBypassRecibo] = useState(false)
     const [dataNota, setDataNota] = useState("");
     const [dataValidadeRetificacao, setDataValidadeRetificacao] = useState("");
     const [notaParamBypass, setNotaParamBypass] = useState(false);
@@ -206,9 +207,9 @@ const NovoDocumento = () => {
     const [loadingProdutos, setLoadingProdutos] = useState(false);
     useEffect(() => {
       
-        setLoadingProdutos(true);
-        setLoadingClientes(true);
-        api.get("/v1/artigos")
+        produtos?.length <= 0 && setLoadingProdutos(true);
+        (clientes.length <= 0) && setLoadingClientes(true);
+        produtos?.length <= 0 && api.get("/v1/artigos")
             .then((res) => {
                 setProdutos([...res.data].filter((i) => i?.status == "activo"));
                 setLoadingProdutos(false);
@@ -216,7 +217,8 @@ const NovoDocumento = () => {
             .catch((err) => {
                 setLoadingProdutos(false);
             });
-        api.get("/v1/clientes/index")
+        if (clientes.length <= 0) {
+          api.get("/v1/clientes/index")
             .then((res) => {
                 console.trace('clients response', res);
                 setClientes(
@@ -233,7 +235,15 @@ const NovoDocumento = () => {
                 );
                 setLoadingClientes(false);
                 
-                setSelectedCliente(
+                
+                console.trace('selectedd', factura?.cliente_id, selectedCliente, clientes)
+            })
+            .catch((err) => {
+                console.log('error fetching clients', err);
+                setLoadingClientes(false);
+            });
+        }else {
+          setSelectedCliente(
                     [
                         {
                             id: null,
@@ -241,15 +251,10 @@ const NovoDocumento = () => {
                         },
                     ]
                         .concat(
-                            [...res.data].filter((i) => i?.status == "activo")
+                            [...clientes].filter((i) => i?.status == "activo")
                         )?.find((i) => i?.id == factura?.cliente_id)
                 );
-                console.trace('selectedd', factura?.cliente_id, selectedCliente, clientes)
-            })
-            .catch((err) => {
-                console.log('error fetching clients', err);
-                setLoadingClientes(false);
-            });
+        }
     }, [factura]);
     useEffect(() => {
         const fullUserEmpresa = JSON.parse(
@@ -1001,6 +1006,73 @@ const totalPagar = totalValue("total");
     })
   
 };
+const saveDoc = () => {
+  setSuccessContinue(false)
+  if (
+    reciboParam &&
+    payments.some((pagamento) => !pagamento.valor || pagamento.valor === "" || (pagamento.tipoPagamento != "Dinheiro" && (!pagamento.banco || pagamento.banco === "" || !pagamento.referencia || !pagamento.referencia)) )
+  ) {
+    toastError("Preencha todos os campos dos pagamentos!");
+    return;
+  }
+  if (
+    reciboParam && filteredPagamentos(payments)?.length == 0
+  ) {
+    toastError("Adicione pelo menos um pagamento válido para a factura recibo!");
+    return;
+  }
+
+  if (reciboParam && !byPassRecibo && (totalValue("total") - totalPagamentoValue("valor") < 0)) {
+    setSuccessTitle("Valor recebido a mais")
+    setSuccessDescription(
+      `O quantia recebida (${formatCurrency(totalPagamentoValue("valor"))}) excede os (${formatCurrency(totalValue("total"))}) da factura.`
+    );
+    setOpenPayment(true)
+
+    return;
+  }
+
+  setLoad(true)
+  const apiUrl = (totalValue("total") - totalPagamentoValue("valor")) <= 0
+        ? 
+          "/v1/facturas/edit/" +
+          factura?.id +
+          "?recibo=adicionar"
+        : "/v1/facturas/edit/" + factura?.id;
+const totalPagar = totalValue("total");
+    const totalImpostos = totalValue("taxaImposto");
+    const totalDescontos = totalValue("descontoFinal");
+
+    axios.post(apiUrl, {
+      polo_id: polo?.id,
+          cliente_id: selectedCliente?.id,
+          tipoDocumento: tipoDocumento,
+          dataEmissao: dataEmissao,
+          dataValidade: dataValidade,
+          obs: notas,
+          moeda: moeda,
+          totalPagar: totalPagar,
+          totalImpostos: totalImpostos,
+          totalDescontos: totalDescontos,
+          produtos: selectedProdutos,
+          pagamentos: [...payments],
+    })
+    .then((res) => {
+      setLoad(false)
+      setDone(true)
+      setResponseDoc(res.data)
+      sessionStorage.setItem("factura", JSON.stringify(res.data));
+
+      toastSuccess("Documento editado com sucesso!")
+    })
+    .catch(err => {
+      console.log('error', err)
+      setLoad(false)
+      toastError("Erro ao editar documento: " +
+              JSON.stringify(err?.error?.message || err?.message)
+          )
+    })
+}
 const getTotalPages = () => {
     return Array(
       Math.ceil(selectedProdutos?.length / itemsPerPage)
@@ -3068,6 +3140,58 @@ const HeaderTemplate = () => {
                                 <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
                             </svg>
                             Criar Documento
+                        </button>
+      </>
+    )}
+
+    {!load &&
+    factura && !done && reciboParam && (
+      <>
+        {reciboParam && (
+          
+          <button
+                            className="btn btn-primary btn-label"
+                            style={{ fontSize: 14, borderRadius: 4 }}
+                            
+            onClick={addPayment}
+
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                fill="currentColor"
+                                class="bi bi-plus"
+                                viewBox="0 0 16 16"
+                            >
+                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+                            </svg>
+                            Adicionar pagamento
+                        </button>
+        )}
+
+        <button
+                            className="btn btn-success btn-label"
+                            style={{ fontSize: 14, borderRadius: 4 }}
+                            disabled={
+            totalValue("total") -
+              totalPagamentoValue("valor") >=
+              0
+          }
+                            onClick={saveDoc}
+
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                fill="currentColor"
+                                class="bi bi-plus"
+                                viewBox="0 0 16 16"
+                            >
+                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+                            </svg>
+                            Salvar Documento
                         </button>
       </>
     )}
