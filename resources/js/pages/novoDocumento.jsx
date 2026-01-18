@@ -23,6 +23,7 @@ import { Bounce, toast, ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "../components/ui/alert-dialog"
 import { jsPDF } from "jspdf";
+import axios from "axios";
 
 
 const NovoDocumento = () => {
@@ -964,6 +965,40 @@ if (
 
     return;
   }
+
+  setLoad(true)
+  const apiUrl = "/v1/facturas/store";
+const totalPagar = totalValue("total");
+    const totalImpostos = totalValue("taxaImposto");
+    const totalDescontos = totalValue("descontoFinal");
+
+    axios.post(apiUrl, {
+      polo_id: polo?.id,
+          cliente_id: selectedCliente?.id,
+          tipoDocumento: tipoDocumento,
+          dataEmissao: dataEmissao,
+          dataValidade: dataValidade,
+          obs: notas,
+          moeda: moeda,
+          totalPagar: totalPagar,
+          totalImpostos: totalImpostos,
+          totalDescontos: totalDescontos,
+          produtos: selectedProdutos,
+          pagamentos: [...payments],
+    })
+    .then((res) => {
+      setLoad(false)
+      setDone(true)
+      setResponseDoc(res.data)
+      toastSuccess("Documento criado com sucesso!")
+    })
+    .catch(err => {
+      console.log('error', err)
+      setLoad(false)
+      toastError("Erro ao criar documento: " +
+              JSON.stringify(err?.error?.message || err?.message)
+          )
+    })
   
 };
 const getTotalPages = () => {
@@ -1051,7 +1086,8 @@ const getTotalPages = () => {
       .sort((a, b) => parseFloat(a?.taxa) - parseFloat(b?.taxa));
   }
   const goBack = () => {
-    window.history.go(-1)
+    window.history.back()
+    alert('left')
   }
   const [notaCredito, setNotaCredito] = useState(null);
 
@@ -1134,7 +1170,7 @@ const getTotalPages = () => {
                   pagamento?.referencia?.length > 0 ||
                   pagamento?.banco?.length > 0,
       }));
-      setPayments(facturaPagamentos.concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).concat(facturaPagamentos).slice(0, 15));
+      setPayments(facturaPagamentos);
 
 
       
@@ -1375,10 +1411,10 @@ const getTotalPages = () => {
                     "Nota de crédito (anulação)" ? (
                     !notaParam || notaParamBypass ? (
                       <>
-                        <div style={{ opacity: 0, fontWeight: 800 }}>
-                          something
-                        </div>
-                        <div style={{ opacity: 0 }}>something</div>
+                        <div style={{ fontWeight: 800 }}>Obs:</div>
+                          <div style={{ maxHeight: '25px' }}>
+                            Através do(s) seguinte(s) meio(s) no valor total de {formatCurrency(totalPagamentoValue("valor"))}
+                          </div>
                       </>
                     ) : (
                       <>
@@ -2773,13 +2809,13 @@ const HeaderTemplate = () => {
   {!load &&
     ((factura && !reciboParam && !notaParam) || done) && (
       <>
-        <button
+        {/* <button
           className="btn btn-link link-danger text-decoration-none fw-medium"
           onClick={goBack}
         >
           <i className="ri-arrow-left-line me-1 align-middle"></i>
           Voltar
-        </button>
+        </button> */}
 
         {/* EXPORTAR RECIBO */}
         {tipoDocumento === "Factura" &&
@@ -2984,7 +3020,7 @@ const HeaderTemplate = () => {
 
   {/* CREATE DOCUMENT */}
   {!load &&
-    !factura && (
+    !factura && !done && (
       <>
         {tipoDocumento === "Factura Recibo" && (
           

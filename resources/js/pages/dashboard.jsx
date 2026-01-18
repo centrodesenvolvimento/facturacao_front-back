@@ -3,6 +3,8 @@ import "../../css/dashboard.css";
 import Loading1 from "../components/loading1";
 import api from "../components/api";
 import { format } from "date-fns";
+import Flatpickr from "react-flatpickr";
+import "flatpickr/dist/themes/material_blue.css";
 import {
     Popover,
     PopoverContent,
@@ -19,13 +21,17 @@ const Dashboard = () => {
             maximumFractionDigits: 2,
         })}`;
     };
+    const flatpickrOptions = {
+    // locale: Portuguese,
+    // You may add other Flatpickr options here if needed
+  };
     const [searchFilter, setSearchFilter] = useState("");
     const [poloFilter, setPoloFilter] = useState(null);
     const [yearFilter, setYearFilter] = useState(null);
     const [tipoFilter, setTipoFilter] = useState(null);
     const [monthFilter, setMonthFilter] = useState(null);
     const [typeDateFilter, setTypeDateFilter] = useState("Anual");
-    const [dateRangeFilter, setDateRangeFilter] = useState(null);
+    const [dateRangeFilter, setDateRangeFilter] = useState([]);
     const [empresa, setEmpresa] = useState(null);
     const [loadStats, setLoadStats] = useState(false);
     const [loadEmpresa, setLoadEmpresa] = useState(false);
@@ -201,8 +207,8 @@ const Dashboard = () => {
     };
 
     const removeItems = () => {
-        localStorage.removeItem("factura");
-    localStorage.removeItem("polo");
+        sessionStorage.removeItem("factura");
+    sessionStorage.removeItem("polo");
     };
     const openModal = (content) => {
         // implement modal logic
@@ -241,12 +247,12 @@ const Dashboard = () => {
         api
             .get(apiUrl)
             .then((response) => {
-                const data = response.data;
+                const data = response?.current_page ? response : response.data;
 
                 console.trace("response change page", data);
 
                 setDocumentosFun(
-                    data?.data || [],
+                    data?.data ? [...data?.data] : [],
                     data?.current_page,
                     perPage(),
                     data?.total
@@ -270,7 +276,7 @@ const Dashboard = () => {
 
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
-    const perPage = () => 17;
+    const perPage = () => 16;
     const [currentPage, setCurrentPage] = useState(1);
     const [page, setPage] = useState(1);
     const [loadDocumentos, setLoadDocumentos] = useState(false);
@@ -456,11 +462,11 @@ const Dashboard = () => {
         let apiUrl1 = `/v1/facturas`;
 
         if (typeDateFilter === "Intervalo") {
-            if (dateRange?.from && dateRange?.to) {
+            if (dateRange?.[0] && dateRange?.[1]) {
                 apiUrl1 = `/v1/facturas?polo=${polo}&from=${new Date(
-                    dateRange.from
+                    dateRange?.[0]
                 ).toISOString()}&to=${new Date(
-                    dateRange.to
+                    dateRange?.[1]
                 ).toISOString()}&tipo=${tipo}&search=${search}`;
             } else {
                 return;
@@ -554,12 +560,11 @@ const Dashboard = () => {
     useEffect(() => {
        
         if (typeDateFilter == "Intervalo") {
-            const dateRange = this.dateRangeFilter?.split(" - ") ?? null;
-            console.log("daterange", dateRange);
+            
 
-            // if (dateRange?.from && dateRange?.to) {
-            //     this.checkFilters(dateRange);
-            // }
+            if (dateRangeFilter?.[0] && dateRangeFilter?.[1]) {
+                checkFilters(dateRangeFilter);
+            }
         } else {
             checkFilters();
         }
@@ -791,15 +796,27 @@ const Dashboard = () => {
                                 </select>
                             </>
                         ) : (
-                            <input
-                                type="text"
-                                className="form-control"
-                                placeholder="Seleccione um intervalo de dias"
-                                value={dateRangeFilter}
-                                onChange={(e) =>
-                                    setDateRangeFilter(e.target.value)
-                                }
-                            />
+                            
+                            <div className="form-control" style={{padding: 0, outline: 0,}}>
+                                <Flatpickr
+                                      value={dateRangeFilter}
+                                      options={{
+        mode: "range",
+        altInput: true,
+        altFormat: "d/m/Y",
+        dateFormat: "Y-m-d",
+        closeOnSelect: false
+      }}
+                                      onChange={(dates) => {
+  if (dates.length === 2) {
+    setDateRangeFilter(dates);
+  }
+}}
+                                      placeholder="Seleccione um intervalo de dias"
+                                      className="form-control"
+                                      style={{border: 'none', outline: 'none'}}
+                                    />
+                            </div>
                         )}
 
                         <select
@@ -977,7 +994,7 @@ const Dashboard = () => {
                                                                                         e
                                                                                     ) => {
                                                                                         e.preventDefault();
-                                                                                        tipoFilter?.value ===
+                                                                                        tipoFilter ===
                                                                                             "Recibo" ||
                                                                                         data?.isRecibo
                                                                                             ? exportPDF(
@@ -997,7 +1014,7 @@ const Dashboard = () => {
                                                                                     "Factura" &&
                                                                                     !data?.isRecibo &&
                                                                                     !data?.dataEmissaoRecibo &&
-                                                                                    tipoFilter?.value !==
+                                                                                    tipoFilter !==
                                                                                         "Recibo" &&
                                                                                     canAddNotaCredito(
                                                                                         data
@@ -1020,37 +1037,37 @@ const Dashboard = () => {
                                                                                         </div>
                                                                                     )}
 
-                                                                                {(data?.tipoDocumento ===
-                                                                                    "Factura" ||
-                                                                                    data?.tipoDocumento ===
-                                                                                        "Factura Recibo" ||
-                                                                                    data?.tipoDocumento ===
-                                                                                        "Factura Global") &&
-                                                                                    !data
-                                                                                        ?.notas_credito?.[0]
-                                                                                        ?.id &&
-                                                                                    !data?.isRecibo &&
-                                                                                    tipoFilter?.value !==
-                                                                                        "Recibo" && (
-                                                                                        <div
-                                                                                            className="dropdown-item d-flex align-items-center"
-                                                                                            href="#"
-                                                                                            onClick={(
-                                                                                                e
-                                                                                            ) => {
-                                                                                                e.preventDefault();
-                                                                                                addNotaCredito(
-                                                                                                    data,
-                                                                                                    true
-                                                                                                );
-                                                                                            }}
-                                                                                        >
-                                                                                            Adicionar
-                                                                                            nota
-                                                                                            de
-                                                                                            crédito
-                                                                                        </div>
-                                                                                    )}
+                                                        {(data?.tipoDocumento ===
+                                                            "Factura" ||
+                                                            data?.tipoDocumento ===
+                                                                "Factura Recibo" ||
+                                                            data?.tipoDocumento ===
+                                                                "Factura Global") &&
+                                                            !(data
+                                                                ?.notas_credito?.[0]
+                                                                ?.id) &&
+                                                            !(data?.isRecibo) &&
+                                                            tipoFilter !==
+                                                                "Recibo" && (
+                                                                <div
+                                                                    className="dropdown-item d-flex align-items-center"
+                                                                    href="#"
+                                                                    onClick={(
+                                                                        e
+                                                                    ) => {
+                                                                        e.preventDefault();
+                                                                        addNotaCredito(
+                                                                            data,
+                                                                            true
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    Adicionar
+                                                                    nota
+                                                                    de
+                                                                    crédito
+                                                                </div>
+                                                            )}
                                                                             </div>
                                                                         </PopoverContent>
                                                                     </Popover>

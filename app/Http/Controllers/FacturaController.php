@@ -9,18 +9,14 @@ use App\Models\Categoria;
 use App\Models\Clientes;
 use App\Models\Polo;
 use App\NotaCredito;
-use BaconQrCode\Renderer\Image\EpsImageBackEnd;
-use BaconQrCode\Renderer\Image\ImagickImageBackEnd;
-use BaconQrCode\Renderer\RendererStyle\RendererStyle;
-use BaconQrCode\Writer;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
-use BaconQrCode\Renderer\ImageBackEnd\GdBackEnd;
-use BaconQrCode\Renderer\ImageRenderer;
+
 
 class FacturaController extends Controller
 {
@@ -542,12 +538,12 @@ class FacturaController extends Controller
         $invoiceUrl = 'localhost:4200/documentos/validar?data=' . $encodedData;
 
 
-        $qrCodeBinary = QrCode::format('png')->size(200)->generate($invoiceUrl);
+        $qrCodeBinary = QrCode::format('svg')->size(200)->generate($invoiceUrl);
 
-        $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCodeBinary);
+$qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode(string: $qrCodeBinary);
 
         $factura->qr_code = $qrCodeBase64;
-        $filePath = storage_path('app/public/test_qr.png');
+        $filePath = storage_path('app/public/test_qr.svg');
         file_put_contents($filePath, $qrCodeBinary);
 
         $factura->qr_code = $qrCodeBase64;
@@ -895,9 +891,9 @@ class FacturaController extends Controller
             $invoiceUrl = 'localhost:4200/documentos/validar?data=' . $encodedData;
 
 
-            $qrCodeBinary = QrCode::format('png')->size(200)->generate($invoiceUrl);
+            $qrCodeBinary = QrCode::format('svg')->size(200)->generate($invoiceUrl);
 
-            $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCodeBinary);
+$qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrCodeBinary);
 
 
             $factura->update([
