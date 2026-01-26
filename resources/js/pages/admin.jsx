@@ -25,12 +25,14 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "../components/ui/alert-dialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../components/api";
 import Loading1 from "../components/loading1";
 import NovoDocumento from "./novoDocumento";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import DocumentVerification from "./validacao";
+import Saft from "./saft";
 
 
 const Admin = () => {
@@ -42,13 +44,13 @@ const Admin = () => {
     const [editName, setEditName] = useState({
         value: `${
             JSON.parse(sessionStorage.getItem("currentUser"))?.name
-        } ricardo bastos`,
+        }`,
         status: false,
     });
     const [editEmail, setEditEmail] = useState({
         value: `${
             JSON.parse(sessionStorage.getItem("currentUser"))?.email
-        } ricardocmbd@gmail.com`,
+        }`,
         status: false,
     });
     const [password, setPassword] = useState("");
@@ -222,6 +224,37 @@ const Admin = () => {
             }
         }
     };
+    useEffect(()=> {
+        if (!(JSON.parse(sessionStorage.getItem("currentUser"))?.email)){
+             window.location.href =
+                                                        "/login";
+                                                    sessionStorage.removeItem(
+                                                        "currentUserPolo"
+                                                    );
+                                                    sessionStorage.removeItem(
+                                                        "currentUser"
+                                                    );
+
+                                                    sessionStorage.removeItem(
+                                                        "token"
+                                                    );
+                                                    sessionStorage.removeItem(
+                                                        "permissions"
+                                                    );
+                                                    sessionStorage.removeItem(
+                                                        "roles"
+                                                    );
+                                                    sessionStorage.removeItem(
+                                                        "modulos_associados"
+                                                    );
+                                                    sessionStorage.removeItem(
+                                                        "fullUserPolo"
+                                                    );
+                                                     sessionStorage.removeItem(
+                                                        "fullUserEmpresa"
+                                                    );
+        }
+    }, [])
 
     return (
         <div>
@@ -236,7 +269,7 @@ const Admin = () => {
       />
             <Loading1 loading={load}/>
             <section className="adminHeader1">
-                <section className="adminHeader">
+                {!(window.location.pathname.includes('documentos/validar')) ? <section className="adminHeader">
                     <div className="header">
                         <div className="logo">Level-Invoice</div>
                         <div className="description">
@@ -258,7 +291,7 @@ const Admin = () => {
                             <PopoverTrigger>
                                 <div className="profilepic">
                                     {name?.[0]}
-                                    {name?.split(" ")[1][0]}
+                                    {name?.split(" ")?.[1]?.[0]}
                                 </div>
                             </PopoverTrigger>
                             <PopoverContent className="profilePop" style={{}}>
@@ -364,8 +397,8 @@ const Admin = () => {
                                         <div className="profileHeader">
                                             <div className="profilepic">
                                                 {" "}
-                                                {name[0]}
-                                                {name.split(" ")[1][0]}
+                                                {name?.[0]}
+                                                {name.split(" ")?.[1]?.[0]}
                                             </div>
                                             <div className="profileName">
                                                 {name}
@@ -758,11 +791,11 @@ const Admin = () => {
                                                     }}
                                                 >
                                                     <div className="profilePic">
-                                                        {item.name[0]}
+                                                        {item?.name?.[0]}
                                                         {
                                                             item.name.split(
                                                                 " "
-                                                            )[1][0]
+                                                            )?.[1]?.[0]
                                                         }
                                                     </div>
                                                     <div
@@ -819,11 +852,11 @@ const Admin = () => {
                                                 <div className="profileHeader">
                                                     <div className="profilepic">
                                                         {" "}
-                                                        {item.name[0]}
+                                                        {item?.name?.[0]}
                                                         {
-                                                            item.name.split(
+                                                            item?.name.split(
                                                                 " "
-                                                            )[1][0]
+                                                            )?.[1]?.[0]
                                                         }
                                                     </div>
                                                     <div
@@ -1224,7 +1257,7 @@ const Admin = () => {
                             </PopoverContent>
                         </Popover>
                     </div>
-                </section>
+                </section> : <section className="adminHeader" style={{height: 45}}></section>}
             </section>
             <div className="preAdminBody">
                 <div className="adminBody">
@@ -1235,7 +1268,11 @@ const Admin = () => {
                             <Dashboard />
                         ) : window.location.pathname.endsWith("/novo/documento") ? (
                             <NovoDocumento />
-                        ) : (
+                        ) : window.location.pathname.includes('documentos/validar') ?
+                        <DocumentVerification />
+                        : window.location.pathname.includes('documentos/saft') ?
+                        <Saft />
+                        : (
                             <div>Caminho não existe!</div>
                         )}
                     </div>

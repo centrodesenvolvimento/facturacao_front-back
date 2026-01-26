@@ -405,6 +405,42 @@ class FacturaController extends Controller
             'status' => $request->status ?? 'activo',
 
         ]);
+        $facturaData = [
+            'id' => $factura->id,
+            'tipoDocumento' => $factura->tipoDocumento,
+            'dataEmissao' => $factura->dataEmissao,
+            // 'dataValidade' => $factura->dataValidade,
+            'totalPagar' => $factura->totalPagar,
+            'numeroDocumento' => $factura->numeroDocumento,
+
+            'codigo_factura' => $factura->codigo_factura,
+        ];
+        $jsonData = json_encode($facturaData);
+        $encodedData = urlencode(base64_encode($jsonData));
+
+        $invoiceUrl = 'localhost:8000/v1/documentos/validar?data=' . $encodedData;
+
+
+//         $qrCodeBinary = QrCode::format('svg')->size(200)->generate($invoiceUrl);
+
+// $qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode(string: $qrCodeBinary);
+
+//         $factura->qr_code = $qrCodeBase64;
+$context = stream_context_create([
+    'ssl' => [
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+    ]
+]);
+$png = file_get_contents(
+    'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='
+    . urlencode($invoiceUrl),
+    false,
+    $context
+);
+
+$factura->qr_code = 'data:image/png;base64,' . base64_encode($png);
+$factura->save();
 
         return $factura;
     }
@@ -526,7 +562,7 @@ class FacturaController extends Controller
             'id' => $factura->id,
             'tipoDocumento' => $factura->tipoDocumento,
             'dataEmissao' => $factura->dataEmissao,
-            'dataValidade' => $factura->dataValidade,
+            // 'dataValidade' => $factura->dataValidade,
             'totalPagar' => $factura->totalPagar,
             'numeroDocumento' => $factura->numeroDocumento,
 
@@ -661,8 +697,6 @@ $factura->qr_code = 'data:image/png;base64,' . base64_encode($png);
 
         // $docNumber = "LS {$formattedNumber}{$fixedLetter}{$currentYear}/{$currentMonth}";
 
-
-
         $nota = NotaCredito::create([
             'factura_id' => $request->factura_id,
             'polo_id'         => $request->polo_id,
@@ -688,6 +722,37 @@ $factura->qr_code = 'data:image/png;base64,' . base64_encode($png);
 
         //pegar factura a ser referenciada
         $nota->load('factura');
+
+        $notaData = [
+            'id' => $nota->id,
+            'tipoDocumento' => $nota->tipoDocumento,
+            'dataEmissao' => $nota->dataEmissao,
+            // 'dataValidade' => $factura->dataValidade,
+            'totalPagar' => $nota->totalPagar,
+            'numeroDocumento' => $nota->numeroDocumento,
+            'documentoOrigem' => $nota->factura['numeroDocumento'],
+
+            'codigo_factura' => $nota->codigo_factura,
+        ];
+        $jsonData = json_encode($notaData);
+        $encodedData = urlencode(base64_encode($jsonData));
+
+        $invoiceUrl = 'localhost:8000/v1/documentos/validar?data=' . $encodedData;
+
+$context = stream_context_create([
+    'ssl' => [
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+    ]
+]);
+$png = file_get_contents(
+    'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='
+    . urlencode($invoiceUrl),
+    false,
+    $context
+);
+$nota->qr_code = 'data:image/png;base64,' . base64_encode($png);
+$nota->save();
         return response()->json($nota);
     }
 
@@ -812,6 +877,35 @@ $factura->qr_code = 'data:image/png;base64,' . base64_encode($png);
 
         //pegar factura a ser referenciada
         $nota->load('factura');
+        $notaData = [
+            'id' => $nota->id,
+            'tipoDocumento' => $nota->tipoDocumento,
+            'dataEmissao' => $nota->dataEmissao,
+            // 'dataValidade' => $factura->dataValidade,
+            'totalPagar' => $nota->totalPagar,
+            'numeroDocumento' => $nota->numeroDocumento,
+            'documentoOrigem' => $nota->factura['numeroDocumento'],
+            'codigo_factura' => $nota->codigo_factura,
+        ];
+        $jsonData = json_encode($notaData);
+        $encodedData = urlencode(base64_encode($jsonData));
+
+        $invoiceUrl = 'localhost:8000/v1/documentos/validar?data=' . $encodedData;
+
+$context = stream_context_create([
+    'ssl' => [
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+    ]
+]);
+$png = file_get_contents(
+    'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='
+    . urlencode($invoiceUrl),
+    false,
+    $context
+);
+$nota->qr_code = 'data:image/png;base64,' . base64_encode($png);
+$nota->save();
         $factura = $this->storeNoJson($request, $nota->numeroDocumento);
         return response()->json([
             'nota' => $nota,
@@ -892,13 +986,29 @@ $factura->qr_code = 'data:image/png;base64,' . base64_encode($png);
                 # Valor da asinatura
                 $valor_do_hash = base64_encode($signature);
             }
+            $totalPago = 0;
+            
             $facturaData = [
                 'id' => $factura->id,
                 'tipoDocumento' => 'Recibo',
                 'dataEmissao' => Carbon::now()->format('Y-m-d H:i:s'),
                 'numeroDocumento' => $docNumber,
-                'pagamentos' => $request->pagamentos,
+                
             ];
+            $field = "valor";
+            $totalPago = collect($request->pagamentos)->reduce(function ($count, $item) use ($field) {
+    $value = is_array($item)
+        ? ($item[$field] ?? null)
+        : ($item->{$field} ?? null);
+
+    if ($value !== null && $value !== '') {
+        return $count + (float) $value;
+    }
+
+    return $count;
+}, 0);
+$facturaData['totalPago'] = $totalPago;
+
             $jsonData = json_encode($facturaData);
             $encodedData = urlencode(base64_encode($jsonData));
 

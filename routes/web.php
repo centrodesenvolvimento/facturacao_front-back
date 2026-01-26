@@ -35,6 +35,12 @@ Route::prefix('v1')
         Route::get('novo/documento', function () {
             return view('admin');
         })->name('novoDocumento');
+        Route::get('documentos/validar', function () {
+            return view('admin');
+        })->name('validar');
+        Route::get('documentos/saft', function () {
+            return view('admin');
+        })->name('saft');
 
         // USERS
         Route::get('usuarios', [UserApiController::class, 'index']);
@@ -91,5 +97,13 @@ Route::prefix('v1')
         Route::get('detalhes/{id} ', [ClientesController::class, 'show']);
         Route::delete('apagar/{id}', [ClientesController::class, 'destroy']);
         Route::post('editar/{id}', [ClientesController::class, 'update']);
+    });
+
+    Route::group(['prefix' => 'notasCredito'], function(){
+        // Route::get('/', [ColunasController::class, 'all']);
+        Route::post('store/', [FacturaController::class, 'storeNota']);
+        Route::post('storeRetificacao/', [FacturaController::class, 'storeNotaRetificacao']);
+
+        // Route::post('edit/{id}', [FacturaController::class, 'edit']);
     });
     });

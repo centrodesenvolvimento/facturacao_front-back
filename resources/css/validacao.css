@@ -1,0 +1,135 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+.validacaoContainer .headerLogo {
+    display: inline-flex;
+    flex-direction: row;
+    gap: 5px;
+    font-size: 25px;
+    font-weight: 700;
+    flex: 1;
+    max-width: 200px;
+
+}
+.validacaoContainer .headerLogo img {
+    height: 35px;
+    width: 35px;
+    /* background-color: red; */
+}
+.validacaoContainer {
+    background-color: white;
+    width: 100%;
+    max-width: 800px;
+    padding: 0 !important;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+        font-family: 'Nunito', sans-serif;
+    margin: auto;
+        font-size: 15px;
+
+
+}
+.validacaoContainer .headerContainer {
+    display: flex;
+    flex-direction: row;
+    background-color: #FAFAFA;
+    padding: 20px;
+    
+
+}
+.validacaoContainer .icon {
+    color: #AAE198;
+    border: 5px solid #AAE198;
+    border-radius: 1000px;
+    width: 95px;
+    height: 95px;
+    font-size: 65px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+}
+.validacaoContainer .icon svg {
+    width: 95px;
+    height: 95px;
+}
+.validacaoContainer .header {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+}
+.validacaoContainer .headerText {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-weight: 700;
+    margin-top: 10px;
+
+}
+.validacaoContainer .headerText span:last-child {
+    color: grey;
+    font-weight: 500;
+}
+.validacaoContainer .midContainer {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #eeeeee;
+    margin-bottom: 20px;
+}
+.validacaoContainer .numeroDoc {
+    font-size: 23px;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+.validacaoContainer .description {
+    font-size: 15px !important;
+    color: grey;
+}
+.validacaoContainer strong {
+    color: black;
+    font-weight: 800;
+}
+.validacaoContainer .stats {
+    margin-top: 35px;
+    display: flex;
+    flex-direction: row;
+}
+.validacaoContainer .stat:first-child {
+    border-right: 2px solid #eeeeee;
+}
+.validacaoContainer .stat {
+    flex: 1;
+    padding-inline: 10px;
+}
+.validacaoContainer .stat {
+    font-size: 16px;
+    font-weight: 700;
+}
+.validacaoContainer .stat label {
+    color: grey;
+}
+.validacaoContainer .footerContainer {
+    padding: 20px;
+
+}
+.validacaoContainer .subTtile {
+    font-size: 16px;
+    font-weight: 700;
+
+}
+.validacaoContainer ul {
+    margin-top: 20px;
+    list-style: circle;
+}
+.validacaoContainer li {
+    list-style: circle;
+    gap: 5px;
+    margin-bottom: 10px;
+        font-size: 15px;
+
+}
+.validacaoContainer li label {
+    font-weight: 700; 
+    font-size: unset;
+    margin-bottom: 5px;
+}

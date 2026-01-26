@@ -283,7 +283,11 @@ const Dashboard = () => {
     const [documentos, setDocumentos] = useState([]);
     const [visibleDocumentos, setVisibleDocumentos] = useState([]);
     const [filteredDocumentos, setFilteredDocumentos] = useState([]);
-    const canAddNotaCredito = (data) => true; // placeholder
+    const canAddNotaCredito = (data) => {
+        return ![...(data?.notas_credito || [])].some(
+      (i) => i?.tipoDocumento == "Nota de crédito (anulação)"
+    );
+    } // placeholder
     const exportPDF = (data, type) => {}; // placeholder
     const navigateToDetails = (data, recibo) => {
         sessionStorage.setItem("factura", JSON.stringify(data));
@@ -576,6 +580,20 @@ const Dashboard = () => {
         typeDateFilter,
         dateRangeFilter,
     ]);
+
+    const addNotaCredito = (data, recibo) => {
+        sessionStorage.setItem("factura", JSON.stringify(data));
+        sessionStorage.setItem(
+        "polo",
+        JSON.stringify(
+            empresa?.polos?.find((i) => i?.id == poloFilter)
+        )
+        );
+        const url = "/v1/novo/documento" + (true ? "?nota=adicionar" : "");
+
+        window.open(url, "_blank");
+    
+  };
     return (
         <div className="dashboardContainer">
             <Loading1 loading={load} />
@@ -891,14 +909,16 @@ const Dashboard = () => {
                                                             <td>
                                                                 <div>
                                                                     {
-                                                                        data.numeroDocumento
+                                                                        data?.isRecibo ? data?.numeroRecibo : data?.numeroDocumento
                                                                     }
                                                                 </div>
                                                             </td>
                                                             <td>
                                                                 <div>
                                                                     {
-                                                                        data.tipoDocumento
+                                                                        tipoFilter == 'Recibo'
+                        ? 'Recibo'
+                        : data?.isRecibo ? 'Recibo' : data?.tipoDocumento
                                                                     }
                                                                 </div>
                                                             </td>
@@ -922,7 +942,7 @@ const Dashboard = () => {
                                                             <td>
                                                                 <div>
                                                                     {format(
-                                                                        data?.dataEmissao,
+                                                                        (data?.isRecibo ? data?.dataEmissaoRecibo : data?.dataEmissao),
                                                                         "dd/MM/yyyy"
                                                                     )}
                                                                 </div>
@@ -1012,8 +1032,11 @@ const Dashboard = () => {
 
                                                                                 {data?.tipoDocumento ===
                                                                                     "Factura" &&
-                                                                                    !data?.isRecibo &&
-                                                                                    !data?.dataEmissaoRecibo &&
+                                                                                    !(data?.isRecibo) &&
+                                                                                    !(data?.dataEmissaoRecibo) &&
+                                                                                    !(data
+                                                                ?.notas_credito?.[0]
+                                                                ?.id) &&
                                                                                     tipoFilter !==
                                                                                         "Recibo" &&
                                                                                     canAddNotaCredito(

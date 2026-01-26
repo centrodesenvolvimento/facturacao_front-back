@@ -3,6 +3,7 @@ import "../../css/novoDocumento.css";
 import Loading1 from "../components/loading1";
 import logo from "../../images/logo.jpeg";
 import { format, parseISO, set } from "date-fns";
+
 import {
     Dialog,
     DialogContent,
@@ -27,13 +28,13 @@ import axios from "axios";
 
 
 const NovoDocumento = () => {
+  const [done, setDone] = useState(false);
     const [load, setLoad] = useState(false);
     const [loadingClientes, setLoadingClientes] = useState(false);
     const [notaParam, setNotaParam] = useState(false);
     const [replica, setReplica] = useState('Original');
     const [factura, setFactura] = useState(null);
     const [polo, setPolo] = useState(null);
-    const [notaTipo, setNotaTipo] = useState("");
     const [documentoOrigem, setDocumentoOrigem] = useState("");
     const [byPassRecibo, setBypassRecibo] = useState(false)
     const [dataNota, setDataNota] = useState("");
@@ -69,7 +70,11 @@ const NovoDocumento = () => {
     const [reciboParam, setReciboParam] = useState(false);
     const today = new Date().toISOString().split("T")[0];
     const totalValue = (field) => {
-        return selectedProdutos?.reduce((count, item) => {
+        return (
+  done === true && responseDoc1?.nota && responseDoc1?.factura && load && Array.isArray(responseDoc?.produtos)
+    ? responseDoc.produtos
+    : selectedProdutos
+)?.reduce((count, item) => {
             if (
                 eval(`item.${field}`) !== undefined &&
                 eval(`item.${field}`) !== null &&
@@ -131,16 +136,7 @@ const NovoDocumento = () => {
             });
     };
     const totalPagamentoValue = (field) => {
-        console.log('total pagamento', filteredPagamentos(payments).reduce((count, item) => {
-            if (
-                eval(`item.${field}`) !== undefined &&
-                eval(`item.${field}`) !== null &&
-                eval(`item.${field}`) != ""
-            ) {
-                return count + parseFloat(eval(`item?.${field}`));
-            }
-            return count;
-        }, 0))
+       
         return filteredPagamentos(payments).reduce((count, item) => {
             if (
                 eval(`item?.${field}`) !== undefined &&
@@ -275,7 +271,9 @@ const NovoDocumento = () => {
         setEmail(fullUserPolo?.email || "");
         
         if (fullUserEmpresa?.logo) {
-          setEmpresaImage(`/storage/${fullUserEmpresa?.logo}`);
+          // setEmpresaImage(`/storage/${fullUserEmpresa?.logo}`);
+          // setEmpresaImage("https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1770854400&v=beta&t=GM8FbM7oioz63kgp7-nf2uBSuMikuHzW1A1jyr1Ecmo")
+          setEmpresaImage(logo)
         }else {
           setEmpresaImage(logo)
         }
@@ -412,7 +410,7 @@ style: {
         }
     };
     const [maxFixo, setMaxFixo] = useState(0);
-    const [done, setDone] = useState(false);
+    
     const openModal = () => {
         
 
@@ -879,7 +877,7 @@ const restoreStyles = disableStylesheets();
     });
   }
     const setResponseDocFun = (type) => {
-        if (tipo == "factura") {
+        if (type == "factura") {
       setNotaParamBypass(true);
       setResponseDoc(responseDoc1?.factura);
     } else {
@@ -998,11 +996,17 @@ const totalPagar = totalValue("total");
       toastSuccess("Documento criado com sucesso!")
     })
     .catch(err => {
-      console.log('error', err)
+      console.log('error', err?.response)
       setLoad(false)
-      toastError("Erro ao criar documento: " +
+      if (err?.response?.data?.erro) {
+        toastError("Erro ao criar documento: " +
+              JSON.stringify(err?.response?.data?.erro)
+          )
+      }else {
+        toastError("Erro ao criar documento: " +
               JSON.stringify(err?.error?.message || err?.message)
           )
+      }
     })
   
 };
@@ -1075,7 +1079,11 @@ const totalPagar = totalValue("total");
 }
 const getTotalPages = () => {
     return Array(
-      Math.ceil(selectedProdutos?.length / itemsPerPage)
+      Math.ceil((
+  done === true && responseDoc1?.nota && responseDoc1?.factura && load && Array.isArray(responseDoc?.produtos)
+    ? responseDoc.produtos
+    : selectedProdutos
+)?.length / itemsPerPage)
     ).fill("");
   }
 
@@ -1088,7 +1096,11 @@ const getTotalPages = () => {
     ).fill("");
   }
   const getLastPageProductIndex = () => {
-    const totalItems = selectedProdutos?.length;
+    const totalItems = (
+  done === true && responseDoc1?.nota && responseDoc1?.factura && load && Array.isArray(responseDoc?.produtos)
+    ? responseDoc.produtos
+    : selectedProdutos
+)?.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     // Items on the last page
@@ -1124,7 +1136,11 @@ const getTotalPages = () => {
     const groupProdutosByTaxa = () => {
     const groupedMap = new Map();
 
-    selectedProdutos.forEach((item) => {
+    (
+  done === true && responseDoc1?.nota && responseDoc1?.factura && load && Array.isArray(responseDoc?.produtos)
+    ? responseDoc.produtos
+    : selectedProdutos
+).forEach((item) => {
       const taxa = item?.produto?.impostoFull?.taxa ?? "N/A";
 
       if (!groupedMap.has(taxa)) {
@@ -1191,9 +1207,17 @@ const getTotalPages = () => {
 
       if (searchParams.get("nota")) {
         setNotaParam(true);
+
       }
       factura = JSON.parse(sessionStorage.getItem("factura") || "{}");
-      setNotaCredito(factura?.nota_credito || null);
+      if (factura?.nota && factura?.factura){
+        setResponseDoc1(factura)
+                factura = factura?.nota
+                setNotaParam(true);
+        setDone(true);
+
+      }
+      setNotaCredito(factura?.notas_credito || null);
       if (factura?.factura_id) {
         setNotaParam(true);
         setDone(true);
@@ -1202,19 +1226,14 @@ const getTotalPages = () => {
     }
     //if notaparam state is true
 
-    if (factura?.factura_id >= 0) {
-      setTipoNota(factura?.tipoDocumento)
-      setDocumentoOrigem(factura?.factura?.numeroDocumento)
-      setDataNota(format(new Date(factura?.dataEmissao), "yyyy-MM-dd"))
-      setMotivo(factura?.obs || "")
-    }
+    
     if (factura){
       setResponseDoc(factura)
       console.trace('factura loaded', factura);
       const polo = JSON.parse(sessionStorage.getItem("polo") || "{}");
       setLocalizacao(polo?.localizacao || "")
-      setDataEmissao(format(new Date(factura?.dataEmissao), "yyyy-MM-dd"))
-      setDataValidade(format(new Date(factura?.dataValidade), "yyyy-MM-dd"))
+      setDataEmissao(format(new Date(factura?.dataEmissao||null), "yyyy-MM-dd"))
+      setDataValidade(format(new Date(factura?.dataValidade||null), "yyyy-MM-dd"))
       setTipoDocumento(factura?.tipoDocumento)
       setMoeda(factura?.moeda)
       setNotas(factura?.obs)
@@ -1258,9 +1277,180 @@ const getTotalPages = () => {
             )
         );
     }
+    let factura1 = JSON.parse(sessionStorage.getItem("factura") || "{}");
 
+    if (factura1?.nota && factura1?.factura){
+        setSelectedProdutos(
+            [...factura1?.factura?.produtos||[]]?.map(
+                (i, index) => {
+                    return {
+                        ...i,
+                        index: index + 1,
+                    };
+                }
+            )
+        );
+
+    }
+
+    if (factura?.factura_id >= 0) {
+      console.trace('facturaaaaa', factura)
+      setTipoNota(factura?.tipoDocumento)
+      setDocumentoOrigem(factura?.factura?.numeroDocumento)
+      setDataNota(format(new Date(factura?.dataEmissao), "yyyy-MM-dd"))
+      setMotivo(factura?.obs || "")
+      if (factura?.tipoDocumento != "Nota de crédito (anulação)"){
+          setDataValidadeRetificacao(format(new Date(factura?.dataValidade), "yyyy-MM-dd"))
+        }
+
+        setDataEmissao(format(new Date(factura?.factura?.dataEmissao||null), "yyyy-MM-dd"))
+      setDataValidade(format(new Date(factura?.factura?.dataValidade||null), "yyyy-MM-dd"))
+      setTipoDocumento(factura?.factura?.tipoDocumento)
+      setMoeda(factura?.factura?.moeda)
+      setNotas(factura?.factura?.obs||"")
+    }
+    const searchParams = new URLSearchParams(location.search);
+
+    if (searchParams.get('nota')) {
+      setDocumentoOrigem(factura?.numeroDocumento)
+    setDataNota(format(new Date(), 'yyyy-MM-dd'))
+
+      if (factura?.factura_id >= 0) {
+        setTipoNota(factura?.tipoDocumento)
+        setDocumentoOrigem(factura?.factura?.numeroDocumento)
+        setDataNota(format(new Date(factura?.dataEmissao), 'yyyy-MM-dd'))
+        setMotivo(factura?.obs)
+        if (factura?.tipoDocumento != "Nota de crédito (anulação)"){
+          setDataValidadeRetificacao(format(new Date(factura?.dataValidade), "yyyy-MM-dd"))
+        }
+
+        
+      }
+    }
     
   }, [])
+  const addNota = () => {
+    // let value = this.facturaForm.value;
+    // let value1 = this.notaForm.value;
+    let apiUrl = "/v1/notasCredito/store";
+
+    const totalPagar = totalValue("total");
+    const totalImpostos = totalValue("taxaImposto");
+    const totalDescontos = totalValue("descontoFinal");
+
+    if (!motivo || !tipoNota ) {
+      toastError('Preencha por favor todos os campos da nota!')
+      return;
+    }
+    if (tipoNota != "Nota de crédito (anulação)" && (!motivo || !tipoNota || !dataValidadeRetificacao)){
+      toastError('Preencha por favor todos os campos da nota1!')
+      return;
+    }
+
+    if (tipoNota == "Nota de crédito (anulação)") {
+      setLoad(true)
+
+      axios.post(apiUrl,
+          {
+            factura_id: factura?.id,
+            polo_id: polo?.id,
+            cliente_id: selectedCliente?.id,
+            tipoDocumento: tipoNota,
+            dataEmissao: dataNota,
+            dataValidade: dataValidade,
+            obs: motivo,
+            moeda: moeda,
+            totalPagar: totalPagar,
+            totalImpostos: totalImpostos,
+            totalDescontos: totalDescontos,
+            produtos: selectedProdutos,
+            pagamentos: [...payments],
+          })
+        .then((res) => {
+          console.trace('succcesfulllllllllllllllllll')
+            setLoad(false);
+            setDone(true);
+            setResponseDoc(res.data)
+            sessionStorage.setItem("factura", JSON.stringify(res.data));
+            toastSuccess("Documento criado com sucesso!")
+          })
+        .catch((err) => {
+            console.log("errrorrrrrr", err);
+            setLoad(false);
+           if (err?.response?.data?.erro) {
+        toastError("Erro ao criar documento: " +
+              JSON.stringify(err?.response?.data?.erro)
+          )
+      }else {
+        toastError("Erro ao criar documento: " +
+              JSON.stringify(err?.error?.message || err?.message)
+          )
+      }
+        })
+    } else {
+      if (
+        [...(factura?.produtos || [])].length ==
+        selectedProdutos.length
+      ) {
+        toastError("Tens de adicionar pelo menos um novo produto!")
+      } else {
+        setLoad(true);
+        apiUrl = "/v1/notasCredito/storeRetificacao";
+        axios.post(apiUrl,
+            {
+              factura_id: factura?.id,
+              factura: factura,
+              polo_id: polo?.id,
+              cliente_id: selectedCliente?.id,
+              tipoDocumento: tipoNota,
+              dataEmissao: dataNota,
+              dataValidade: dataValidadeRetificacao,
+              dataValidadeRetificacao: dataValidadeRetificacao,
+              obs: motivo,
+              moeda: moeda,
+              totalPagar: totalPagar,
+              totalImpostos: totalImpostos,
+              totalDescontos: totalDescontos,
+              produtos: selectedProdutos,
+              pagamentos: [...payments],
+            })
+          .then((res) => {
+              setLoad(false);
+              setDone(true);
+              setResponseDoc1(res.data);
+              sessionStorage.setItem("factura", JSON.stringify(res.data));
+              toastSuccess("Documentos criado com sucesso!")
+            })
+            .catch((err) => {
+              console.log("errrorrrrrr", err);
+              setLoad(false);
+              if (err?.response?.data?.erro) {
+        toastError("Erro ao criar documento: " +
+              JSON.stringify(err?.response?.data?.erro)
+          )
+      }else {
+        toastError("Erro ao criar documento: " +
+              JSON.stringify(err?.error?.message || err?.message)
+          )
+      }
+            })
+      }
+    }
+  };
+  useEffect(() => {
+
+    const handleBeforeUnload = (e) => {
+      alert('co')
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+
+  }, [responseDoc, responseDoc1])
 //   useEffect(() => {
 //     const patchHtml2CanvasColor = () => {
 //   const w = window;
@@ -1295,7 +1485,7 @@ const getTotalPages = () => {
         <div className="pdfLogo">
           <img
               src={empresaImage ||
-                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1769040000&v=beta&t=bIEZ01l0aSWRCzKkaO_eYQP_uPVOc4qTSFzuL4zkg9o"}
+                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1770854400&v=beta&t=GM8FbM7oioz63kgp7-nf2uBSuMikuHzW1A1jyr1Ecmo"}
               className="logo"
             />
           
@@ -1446,7 +1636,7 @@ const getTotalPages = () => {
               </td>
 
               <td >
-                {responseDoc?.numeroDocumento}
+                {motivo ? responseDoc?.factura?.numeroDocumento : responseDoc?.numeroDocumento}
               </td>
 
               <td >
@@ -1463,7 +1653,7 @@ const getTotalPages = () => {
                   }}
                 >
                   <img
-                    src={responseDoc?.qr_code_recibo}
+                    src={motivo ? responseDoc?.qr_code : responseDoc?.qr_code_recibo}
                     style={{
                       width: "100%",
                       height: "220px",
@@ -1480,7 +1670,7 @@ const getTotalPages = () => {
                   {tipoDocumento === "Factura Recibo" ||
                   tipoDocumento === "Factura" ||
                   tipoNota ==
-                    "Nota de crédito (anulação)" ? (
+                    "Nota de crédito (anulação)" || tipoNota.length >0 ? (
                     !notaParam || notaParamBypass ? (
                       <>
                         <div style={{ fontWeight: 800 }}>Obs:</div>
@@ -1504,7 +1694,8 @@ const getTotalPages = () => {
                         <div
                           style={{
                             fontWeight: 800,
-                            marginTop: "10px",
+                            marginTop: 10,
+                            marginBottom: -41
                           }}
                         >
                           Assinatura do cliente:
@@ -1515,7 +1706,7 @@ const getTotalPages = () => {
                               height: "25px",
                               width: "450px",
                               display: "inline-block",
-                              transform: "translateY(3px)",
+                              transform: "translateY(9px)",
                             }}
                           />
                         </div>
@@ -1556,7 +1747,7 @@ const HeaderTemplate = () => {
         <div className="pdfLogo">
           <img
               src={empresaImage ||
-                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1769040000&v=beta&t=bIEZ01l0aSWRCzKkaO_eYQP_uPVOc4qTSFzuL4zkg9o"}
+                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1770854400&v=beta&t=GM8FbM7oioz63kgp7-nf2uBSuMikuHzW1A1jyr1Ecmo"}
               className="logo"
             />
         </div>
@@ -1679,7 +1870,7 @@ const HeaderTemplate = () => {
           <tbody>
             <tr>
               <td>
-                {dataEmissao
+                {responseDoc?.dataEmissao
                   ? format(new Date(dataEmissao), "dd-MM-yyyy")
                   : ""}
               </td>
@@ -1687,8 +1878,8 @@ const HeaderTemplate = () => {
               <td>
                 {tipoDocumento === "Factura Recibo"
                   ? "N/A"
-                  : dataValidade
-                  ? format(new Date(dataValidade), "dd/MM/yyyy")
+                  : responseDoc?.dataValidade
+                  ? format(new Date(responseDoc?.dataValidade), "dd/MM/yyyy")
                   : ""}
               </td>
 
@@ -1860,13 +2051,13 @@ const HeaderTemplate = () => {
 
                                 <select
                                     className="form-control"
-                                    value={notaTipo}
-                                    disabled={!!factura?.factura_id}
+                                    value={tipoNota}
+                                    disabled={!!factura?.factura_id || done}
                                     onChange={(e) =>
-                                        setNotaTipo(e.target.value)
+                                        setTipoNota(e.target.value)
                                     }
                                     style={
-                                        factura?.factura_id
+                                        (factura?.factura_id || done)
                                             ? {
                                                   cursor: "not-allowed",
                                                   pointerEvents: "none",
@@ -1897,9 +2088,9 @@ const HeaderTemplate = () => {
                                         factura ? "bg-light" : ""
                                     }`}
                                     value={documentoOrigem}
-                                    readOnly={!!factura}
+                                    readOnly={!!factura || done}
                                     style={
-                                        factura ? { cursor: "not-allowed" } : {}
+                                        (factura || done) ? { cursor: "not-allowed" } : {}
                                     }
                                     onChange={(e) =>
                                         setDocumentoOrigem(e.target.value)
@@ -1914,7 +2105,12 @@ const HeaderTemplate = () => {
                                 </label>
 
                                 <input
-                                    className="form-control bg-light"
+                                type="date"
+                                className={`form-control ${
+                                                true
+                                                    ? "bg-light"
+                                                    : ""
+                                            }`}
                                     value={dataNota}
                                     readOnly
                                     disabled
@@ -1924,12 +2120,12 @@ const HeaderTemplate = () => {
                         </div>
 
                         {factura?.tipoDocumento !== "Factura Recibo" &&
-                            notaTipo === "Nota de crédito (retificação)" && (
+                            tipoNota === "Nota de crédito (retificação)" && (
                                 <div className="row">
                                     <div
                                         className="col"
                                         style={
-                                            factura?.factura_id
+                                            (factura?.factura_id || done)
                                                 ? {
                                                       cursor: "not-allowed",
                                                       pointerEvents: "none",
@@ -1944,14 +2140,16 @@ const HeaderTemplate = () => {
                                             </span>
                                         </label>
 
+                                        
                                         <input
+                                        type="date"
                                             className={`form-control ${
-                                                factura?.factura_id
+                                                (factura?.factura_id  || done)
                                                     ? "bg-light"
                                                     : ""
                                             }`}
                                             value={dataValidadeRetificacao}
-                                            readOnly={!!factura?.factura_id}
+                                            readOnly={!!factura?.factura_id || done}
                                             onChange={(e) =>
                                                 setDataValidadeRetificacao(
                                                     e.target.value
@@ -1972,21 +2170,23 @@ const HeaderTemplate = () => {
                                 <textarea
                                     className="form-control alert alert-info"
                                     rows={5}
+                                    
                                     value={motivo}
                                     placeholder={
-                                        notaTipo !==
+                                        tipoNota !==
                                         "Nota de crédito (retificação)"
                                             ? "Motivo de emissão..."
                                             : "Ex: Devolução de produtos, troca de produtos, correção de erros, etc..."
                                     }
-                                    disabled={!!factura?.factura_id}
+                                    disabled={!!factura?.factura_id || done}
                                     style={
-                                        factura?.factura_id
+                                        (factura?.factura_id || done)
                                             ? {
                                                   cursor: "not-allowed",
                                                   pointerEvents: "none",
+                                                  fontSize: 14
                                               }
-                                            : {}
+                                            : { fontSize: 14}
                                     }
                                     onChange={(e) => setMotivo(e.target.value)}
                                 />
@@ -2003,7 +2203,7 @@ const HeaderTemplate = () => {
                 <img
                     src={
                         empresaImage ||
-                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1769040000&v=beta&t=bIEZ01l0aSWRCzKkaO_eYQP_uPVOc4qTSFzuL4zkg9o"
+                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1770854400&v=beta&t=GM8FbM7oioz63kgp7-nf2uBSuMikuHzW1A1jyr1Ecmo"
                     }
                     className="logo"
                     alt=""
@@ -2482,8 +2682,8 @@ const HeaderTemplate = () => {
                                                 height: 50,
                                                 padding: 0,
                                                 backgroundColor: "#dff5fa",
-                                                ...(factura &&
-                                                insideFactura(data)
+                                                ...((factura &&
+                                                insideFactura(data) || done)
                                                     ? {
                                                           cursor: "not-allowed",
                                                           pointerEvents: "none",
@@ -2533,7 +2733,7 @@ const HeaderTemplate = () => {
                     </table>
 
                     {(!factura ||
-                        tipoNota === "Nota de crédito (retificação)") && (
+                        tipoNota === "Nota de crédito (retificação)") && !done && (
                         <button
                             className="btn btn-primary btn-label"
                             style={{ fontSize: 14, borderRadius: 4 }}
@@ -2571,9 +2771,9 @@ const HeaderTemplate = () => {
                             factura
                                 ? {
                                       cursor: "not-allowed",
-                                      pointerEvents: "none", height: "100%", margin: 0, zIndex: 0
+                                      pointerEvents: "none", height: "100%", margin: 0, zIndex: 0, fontSize: 14
                                   }
-                                : {height: "100%", margin: 0, zIndex: 0}
+                                : {height: "100%", margin: 0, zIndex: 0, fontSize: 14}
                         }
                     />
 
@@ -2890,7 +3090,7 @@ const HeaderTemplate = () => {
         </button> */}
 
         {/* EXPORTAR RECIBO */}
-        {tipoDocumento === "Factura" &&
+        {tipoDocumento === "Factura" && !notaParam &&
           filteredPagamentos(payments).length > 0 && (
             <Popover>
               <PopoverTrigger asChild>
@@ -3056,9 +3256,9 @@ const HeaderTemplate = () => {
         {/* EXPORTAR NOVA FACTURA */}
         {notaParam &&
           done &&
-          notaTipo ===
+          tipoNota ===
             "Nota de crédito (retificação)" &&
-          !factura?.factura_id && (
+          (!factura?.factura_id || (responseDoc1?.nota && responseDoc1?.factura)) && (
             <Popover>
               <PopoverTrigger>
                 <button
@@ -3193,6 +3393,31 @@ const HeaderTemplate = () => {
                             </svg>
                             Salvar Documento
                         </button>
+      </>
+    )}
+    {/*  */}
+    {!load &&
+    factura && notaParam && !done && (
+      <>
+        {notaParam && <button
+                            className="btn btn-success btn-label"
+                            style={{ fontSize: 14, borderRadius: 4 }}
+                            
+                            onClick={addNota}
+
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                fill="currentColor"
+                                class="bi bi-plus"
+                                viewBox="0 0 16 16"
+                            >
+                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+                            </svg>
+                            Submeter Nota
+                        </button>}
       </>
     )}
 </div>
@@ -3673,7 +3898,7 @@ const HeaderTemplate = () => {
                     <div className="pdfLogo">
                       <img
               src={empresaImage ||
-                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1769040000&v=beta&t=bIEZ01l0aSWRCzKkaO_eYQP_uPVOc4qTSFzuL4zkg9o"}
+                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1770854400&v=beta&t=GM8FbM7oioz63kgp7-nf2uBSuMikuHzW1A1jyr1Ecmo"}
               className="logo"
             />
                     </div>
@@ -3752,7 +3977,7 @@ const HeaderTemplate = () => {
                             backgroundColor: 'white',
                             borderTop: 'none'
                           }}>
-                            {`${tipoDocumento} Nº ${responseDoc?.numeroDocumento}`}
+                          {`${tipoDocumento} Nº ${responseDoc?.numeroDocumento}`}
                           </th>
                           <th style={{
                             fontSize: '13px',
@@ -3774,9 +3999,9 @@ const HeaderTemplate = () => {
                       </thead>
                       <tbody>
                         <tr>
-                          <td>{format(new Date(dataEmissao), 'dd-MM-yyyy')}</td>
+                          <td>{format(new Date(responseDoc?.dataEmissao||null), 'dd-MM-yyyy')}</td>
                           <td>
-                            {tipoDocumento === 'Factura Recibo' ? 'N/A' : format(new Date(dataValidade?.length > 0 ? dataValidade : null), 'dd-MM-yyyy')}
+                            {tipoDocumento === 'Factura Recibo' ? 'N/A' : format(new Date(responseDoc?.dataValidade?.length > 0 ? responseDoc?.dataValidade : null), 'dd-MM-yyyy')}
                           </td>
                           <td>
                             {selectedCliente?.nif || "N/A"}
@@ -3867,19 +4092,19 @@ const HeaderTemplate = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedProdutos && selectedProdutos.length > 0 && 
-                      selectedProdutos
+                    {responseDoc?.produtos && [...responseDoc?.produtos||[]].length > 0 && 
+                      [...responseDoc?.produtos||[]]
                         .slice((pageIndex * itemsPerPage), (pageIndex * itemsPerPage) + itemsPerPage)
                         .map((data, index) => {
                           const globalIndex = index;
                           const isLastPage = pageIndex + 1 === getTotalPages().length;
-                          const isLastProduct = data?.index === selectedProdutos[selectedProdutos.length - 1]?.index;
+                          const isLastProduct = data?.index === [...responseDoc?.produtos||[]][[...responseDoc?.produtos||[]].length - 1]?.index;
                           
                           return (
                             <React.Fragment key={index}>
                               <tr>
                                 <td>
-                                  <div>{data?.index + ''}</div>
+                                  <div>{index + 1 + ''}</div>
                                 </td>
                                 <td>
                                   <div
@@ -4355,7 +4580,7 @@ const HeaderTemplate = () => {
                     <div className="pdfLogo">
                       <img
               src={empresaImage ||
-                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1769040000&v=beta&t=bIEZ01l0aSWRCzKkaO_eYQP_uPVOc4qTSFzuL4zkg9o"}
+                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1770854400&v=beta&t=GM8FbM7oioz63kgp7-nf2uBSuMikuHzW1A1jyr1Ecmo"}
               className="logo"
             />
                     </div>
@@ -4457,7 +4682,7 @@ const HeaderTemplate = () => {
                       </thead>
                       <tbody>
                         <tr>
-                          <td>{format(new Date(responseDoc?.dataEmissaoRecibo), 'dd-MM-yyyy')}</td>
+                          <td>{format(new Date(responseDoc?.dataEmissaoRecibo||null), 'dd-MM-yyyy')}</td>
                           {/* <td>
                             {tipoDocumento === 'Factura Recibo' ? 'N/A' : format(new Date(dataValidade?.length > 0 ? dataValidade : null), 'dd-MM-yyyy')}
                           </td> */}
@@ -4558,7 +4783,6 @@ const HeaderTemplate = () => {
                           const globalIndex = index;
                           const isLastPage = pageIndex + 1 === getTotalPagesRecibos().length;
                           const isLastProduct = data?.index == filteredPagamentos(payments).length;
-                          console.log(';lasjfdlkjdf', isLastPage, isLastProduct)
                           return (
                             <React.Fragment key={index}>
                               <tr>
