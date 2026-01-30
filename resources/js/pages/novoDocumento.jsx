@@ -72,7 +72,7 @@ const NovoDocumento = () => {
     const totalValue = (field) => {
         return (
   done === true && responseDoc1?.nota && responseDoc1?.factura && load && Array.isArray(responseDoc?.produtos)
-    ? responseDoc.produtos
+    ? responseDoc.produtos.concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos)
     : selectedProdutos
 )?.reduce((count, item) => {
             if (
@@ -683,6 +683,8 @@ const disableStylesheets = () => {
         setLoad(false);
         return;
       }
+              const originalContentWidth = isA4 ? 1100 : 2000; // width of your HTML content
+
 
       // Save the original body overflow
       const originalOverflow = document.body.style.overflow;
@@ -708,10 +710,15 @@ const disableStylesheets = () => {
       clonedPages.style.position = "absolute";
       clonedPages.style.left = "0";
       clonedPages.style.top = "0";
+      const DPR = 1;
+      console.trace('dpr', DPR)
 
-      clonedPages.style.width = isA4 ? "1100px" : "2000px"; // Keep 100% width for PDF
-      clonedPages.style.minWidth = isA4 ? "1100px" : "2000px"; // Set minimum width (if needed)
-      clonedPages.style.maxWidth = isA4 ? "1100px" : "2000px";
+clonedPages.style.transform = `scale(${1 / DPR})`;
+clonedPages.style.transformOrigin = "top left";
+
+      clonedPages.style.width = `${originalContentWidth * DPR}px`;
+clonedPages.style.minWidth = `${originalContentWidth * DPR}px`;
+clonedPages.style.maxWidth = `${originalContentWidth * DPR}px`;
       // clonedPages.style.minHeight = "1550px";
       // clonedPages.style.height = "1550px";
       clonedPages.style.overflow = "visible"; // ✅ Very important
@@ -733,7 +740,6 @@ const disableStylesheets = () => {
         });
 
         const pageWidth = doc.internal.pageSize.getWidth(); // A4 full width
-        const originalContentWidth = isA4 ? 1100 : 2000; // width of your HTML content
 
         const pageHeight = doc.internal.pageSize.getHeight(); // A4 full height
         const contentHeight = clonedPages.scrollHeight;
@@ -755,6 +761,7 @@ const restoreStyles = disableStylesheets();
           html2canvas: {
             // scale: scale, // Use calculated scale to fit
             scale: scale,
+            
             // width: pageWidth, // Full width of page
             // height: pageHeight, // Full height of page
             // windowWidth: clonedPages.scrollWidth, // Full width of the rendered content
@@ -767,6 +774,7 @@ const restoreStyles = disableStylesheets();
             windowHeight: 100,
             scrollY: 0,
             scrollX: 0,
+            devicePixelRatio: 1,
             onclone: (clonedDoc) => {
       const styles = clonedDoc.querySelectorAll("style, link[rel='stylesheet']");
 
@@ -1081,7 +1089,7 @@ const getTotalPages = () => {
     return Array(
       Math.ceil((
   done === true && responseDoc1?.nota && responseDoc1?.factura && load && Array.isArray(responseDoc?.produtos)
-    ? responseDoc.produtos
+    ? responseDoc.produtos.concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos)
     : selectedProdutos
 )?.length / itemsPerPage)
     ).fill("");
@@ -1098,7 +1106,7 @@ const getTotalPages = () => {
   const getLastPageProductIndex = () => {
     const totalItems = (
   done === true && responseDoc1?.nota && responseDoc1?.factura && load && Array.isArray(responseDoc?.produtos)
-    ? responseDoc.produtos
+    ? responseDoc.produtos.concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos)
     : selectedProdutos
 )?.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -1138,7 +1146,7 @@ const getTotalPages = () => {
 
     (
   done === true && responseDoc1?.nota && responseDoc1?.factura && load && Array.isArray(responseDoc?.produtos)
-    ? responseDoc.produtos
+    ? responseDoc.produtos.concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos)
     : selectedProdutos
 ).forEach((item) => {
       const taxa = item?.produto?.impostoFull?.taxa ?? "N/A";
@@ -1244,7 +1252,7 @@ const getTotalPages = () => {
           index: index + 1
         }
       })
-      setSelectedProdutos(facturaProdutos);
+      setSelectedProdutos(facturaProdutos.concat(facturaProdutos).concat(facturaProdutos).concat(facturaProdutos).concat(facturaProdutos));
       const facturaPagamentos = [...(factura?.pagamentos || [])].map(pagamento => ({
         banco: pagamento?.banco || "",
         tipoPagamento: pagamento?.tipoPagamento || "",
@@ -4093,7 +4101,7 @@ const HeaderTemplate = () => {
                   </thead>
                   <tbody>
                     {responseDoc?.produtos && [...responseDoc?.produtos||[]].length > 0 && 
-                      [...responseDoc?.produtos||[]]
+                      [...responseDoc?.produtos||[]].concat([...responseDoc?.produtos||[]].concat([...responseDoc?.produtos||[]]).concat([...responseDoc?.produtos||[]]))
                         .slice((pageIndex * itemsPerPage), (pageIndex * itemsPerPage) + itemsPerPage)
                         .map((data, index) => {
                           const globalIndex = index;

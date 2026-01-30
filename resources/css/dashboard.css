@@ -659,25 +659,69 @@
     background-color: #8f9cad3f;
     clip-path: circle();
 }
+#pdfContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    display: none;
+
+    justify-content: flex-start;
+    padding-inline: 20px;
+    padding-bottom: 10px;
+    font-family: sans-serif;
+
+}
 #pdfContainer1 {
     flex: 1;
     display: flex;
     flex-direction: column;
     display: none;
-    
+
     justify-content: flex-start;
     padding-inline: 20px;
     padding-bottom: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+
 }
+.pdfLogo {
+    /* margin-bottom: -0px; */
+}
+#pdfContainer1 th, #pdfContainer1 td, #pdfContainerRecibo th, #pdfContainerRecibo td {
+    padding-top: 12px;
+padding-bottom: 12px;
+    border-top: 1px solid #e3e7ec;
+    
+
+}
+
+#pdfContainer1 th, #pdfContainerRecibo th {
+    font-weight: 600;
+}
+
+#pdfContainerA3 {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    display: none;
+
+    justify-content: flex-start;
+    padding-inline: 20px;
+    padding-bottom: 10px;
+
+}
+
 #pdfContainerRecibo {
     flex: 1;
     display: flex;
     flex-direction: column;
     display: none;
-    
+
     justify-content: flex-start;
     padding-inline: 20px;
     padding-bottom: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px
 
 }
 #pdfContent {
@@ -694,7 +738,9 @@
     font-weight: 800;
     color: #2e405a;
 }
-.pdfHeaderRow .value {}
+.pdfHeaderRow {
+    font-size: 14px;
+}
 
 .qrContainer {
     background-color: white;
