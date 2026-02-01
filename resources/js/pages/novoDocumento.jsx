@@ -1525,10 +1525,10 @@ const getTotalPages = () => {
             <span className="value">{nif}</span>
           </div>
 
-          {website !== "" && (
+          {true && (
             <div className="pdfHeaderRow">
               <span className="label">Website: </span>
-              <span className="value">{website}</span>
+              <span className="value">{website?? "N/A"}</span>
             </div>
           )}
 
@@ -1682,7 +1682,7 @@ const getTotalPages = () => {
                     !notaParam || notaParamBypass ? (
                       <>
                         <div style={{ fontWeight: 800 }}>Obs:</div>
-                          <div style={{ maxHeight: '25px' }}>
+                          <div style={{ maxHeight: '21px' }}>
                             Através do(s) seguinte(s) meio(s) no valor total de {formatCurrency(totalPagamentoValue("valor"))}
                           </div>
                       </>
@@ -1693,7 +1693,7 @@ const getTotalPages = () => {
                             <div style={{ fontWeight: 800 }}>
                               Motivo de emissão:
                             </div>
-                            <div style={{ maxHeight: "25px" }}>
+                            <div style={{ maxHeight: "21px" }}>
                               {motivo}
                             </div>
                           </>
@@ -1723,7 +1723,7 @@ const getTotalPages = () => {
                   ) : (
                     <>
                       <div style={{ fontWeight: 800 }}>Obs:</div>
-                      <div style={{ maxHeight: "25px" }}>
+                      <div style={{ maxHeight: "21px" }}>
                         Este documento não serve de factura.
                         <br />
                         {notas}
@@ -1787,10 +1787,10 @@ const HeaderTemplate = () => {
             <span className="value">{nif}</span>
           </div>
 
-          {website !== "" && (
+          {true && (
             <div className="pdfHeaderRow">
               <span className="label">Website: </span>
-              <span className="value">{website}</span>
+              <span className="value">{website ?? "N/A"}</span>
             </div>
           )}
 
@@ -1934,14 +1934,14 @@ const HeaderTemplate = () => {
                       {notas && notas !== "" && (
                         <>
                           <div style={{ fontWeight: 800 }}>Obs:</div>
-                          <div style={{ maxHeight: "25px" }}>{notas}</div>
+                          <div style={{ maxHeight: "21px" }}>{notas}</div>
                         </>
                       )}
                     </>
                   ) : (
                     <>
                       <div style={{ fontWeight: 800 }}>Obs:</div>
-                      <div style={{ maxHeight: "25px" }}>
+                      <div style={{ maxHeight: "21px" }}>
                         Este documento não serve de factura.
                         <br />
                         {notas}
@@ -3931,10 +3931,10 @@ const HeaderTemplate = () => {
                         <span className="label">NIF: </span>
                         <span className="value">{nif}</span>
                       </div>
-                      {website && website !== '' && (
+                      {true && (
                         <div className="pdfHeaderRow">
                           <span className="label">Website: </span>
-                          <span className="value">{website}</span>
+                          <span className="value">{website ?? "N/A"}</span>
                         </div>
                       )}
                       <div className="pdfHeaderRow">
@@ -4052,7 +4052,7 @@ const HeaderTemplate = () => {
                                   {notas && notas !== '' && (
                                     <>
                                       <div style={{ fontWeight: 800 }}>Obs:</div>
-                                      <div style={{ maxHeight: '25px' }}>
+                                      <div style={{ maxHeight: '21px' }}>
                                         {notas}
                                       </div>
                                     </>
@@ -4061,7 +4061,7 @@ const HeaderTemplate = () => {
                               ) : (
                                 <>
                                   <div style={{ fontWeight: 800 }}>Obs:</div>
-                                  <div style={{ maxHeight: '25px' }}>
+                                  <div style={{ maxHeight: '21px' }}>
                                     Este documento não serve de factura. <br />
                                     {notas}
                                   </div>
@@ -4613,10 +4613,10 @@ const HeaderTemplate = () => {
                         <span className="label">NIF: </span>
                         <span className="value">{nif}</span>
                       </div>
-                      {website && website !== '' && (
+                      {true && (
                         <div className="pdfHeaderRow">
                           <span className="label">Website: </span>
-                          <span className="value">{website}</span>
+                          <span className="value">{website ?? "N/A"}</span>
                         </div>
                       )}
                       <div className="pdfHeaderRow">
@@ -4736,7 +4736,7 @@ const HeaderTemplate = () => {
                                   {true && (
                                     <>
                                       <div style={{ fontWeight: 800 }}>Obs:</div>
-                                      <div style={{ maxHeight: '25px' }}>
+                                      <div style={{ maxHeight: '21px' }}>
                                         Através do(s) seguinte(s) meio(s) no valor total de {formatCurrency(totalPagamentoValue("valor"))}
                                       </div>
                                     </>
@@ -4745,7 +4745,7 @@ const HeaderTemplate = () => {
                               ) : (
                                 <>
                                   <div style={{ fontWeight: 800 }}>Obs:</div>
-                                  <div style={{ maxHeight: '25px' }}>
+                                  <div style={{ maxHeight: '21px' }}>
                                     Este documento não serve de factura. <br />
                                     {notas}
                                   </div>

@@ -687,6 +687,9 @@
 .pdfLogo {
     /* margin-bottom: -0px; */
 }
+.pdfCompanyInfo {
+    margin-bottom: -21px;
+}
 #pdfContainer1 th, #pdfContainer1 td, #pdfContainerRecibo th, #pdfContainerRecibo td {
     padding-top: 12px;
 padding-bottom: 12px;

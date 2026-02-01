@@ -6,11 +6,16 @@ import logo from "../../images/logo.jpeg";
 import { format, parseISO, set } from "date-fns";
 import Flatpickr from "react-flatpickr";
 import "flatpickr/dist/themes/material_blue.css";
+import { Bounce, toast, ToastContainer } from "react-toastify";
+
+import { jsPDF } from "jspdf";
+
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "../components/ui/popover";
+import React from "react";
 const Dashboard = () => {
     const [load, setLoad] = useState(false);
     const [stats, setStats] = useState(null);
@@ -42,6 +47,40 @@ const Dashboard = () => {
             maximumFractionDigits: 2,
         })}`;
     };
+     const toastError = (message) => {
+            toast(message, {
+        position: "bottom-right",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: false,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "dark",
+    transition: Bounce,
+    style: {
+        background: 'red',
+        color: 'white'
+    }
+    });
+        }
+        const toastSuccess = (message) => {
+            toast(message, {
+    position: "bottom-right",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: false,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "dark",
+    transition: Bounce,
+    style: {
+        background: '#28a745',
+        color: 'white'
+    }
+    });
+        }
     const [searchFilter, setSearchFilter] = useState("");
     const [empresaImage, setEmpresaImage] = useState(null)
     const [poloFilter, setPoloFilter] = useState(null);
@@ -306,7 +345,245 @@ const Dashboard = () => {
       (i) => i?.tipoDocumento == "Nota de crédito (anulação)"
     );
     } // placeholder
-    const exportPDF = (data, type) => {}; // placeholder
+      const exportPDF = async (data, type=null) => {
+          console.trace('hey there',{
+      ...data,
+      produtos: [...data?.produtos]?.map((i, index) => {
+        return {
+          ...i,
+          index: index + 1,
+        };
+      }),
+    })
+    let documento = {
+      ...data,
+      produtos: [...data?.produtos]?.map((i, index) => {
+        return {
+          ...i,
+          index: index + 1,
+        };
+      }),
+    }
+
+    setDocumento(documento);
+    setLoad(true);
+    (await new Promise((resolve) => setTimeout(resolve, 1000)))
+
+      // const isA4 = tipoFolha == "A4";
+      const isA4 = true;
+      const isHorizontal = false;
+
+      const pages =
+        type == "recibo"
+          ? (document.getElementById("pdfContainerRecibo"))
+          : isA4
+          ? (document.getElementById("pdfContainer1"))
+          : (document.getElementById("pdfContainerA3"));
+
+      if (!pages) {
+        console.error("Element not found");
+        setLoad(false);
+        return;
+      }
+              const originalContentWidth = isA4 ? 1100 : 2000; // width of your HTML content
+
+
+      // Save the original body overflow
+      const originalOverflow = document.body.style.overflow;
+
+      // Disable scrolling
+      document.body.style.overflow = "hidden";
+
+      // Clone the component
+      const clonedPages = pages.cloneNode(true);
+
+      // Create a mask overlay
+      const mask = document.createElement("div");
+      mask.style.position = "fixed";
+      mask.style.top = "0";
+      mask.style.left = "0";
+      mask.style.width = "100vw";
+      mask.style.height = "100vh";
+      mask.style.backgroundColor = "#F3F3F9"; // White mask
+      mask.style.zIndex = "-9998"; // Ensure it covers everything
+      mask.style.pointerEvents = "none"; // Allow interactions behind it
+
+      // Force cloned pages to be visible but off-screen
+      clonedPages.style.position = "absolute";
+      clonedPages.style.left = "0";
+      clonedPages.style.top = "0";
+      const DPR = 1;
+      console.trace('dpr', DPR)
+
+clonedPages.style.transform = `scale(${1 / DPR})`;
+clonedPages.style.transformOrigin = "top left";
+
+      clonedPages.style.width = `${originalContentWidth * DPR}px`;
+clonedPages.style.minWidth = `${originalContentWidth * DPR}px`;
+clonedPages.style.maxWidth = `${originalContentWidth * DPR}px`;
+      // clonedPages.style.minHeight = "1550px";
+      // clonedPages.style.height = "1550px";
+      clonedPages.style.overflow = "visible"; // ✅ Very important
+      clonedPages.style.breakInside = "avoid"; // Optional
+      clonedPages.style.backgroundColor = "white";
+
+      clonedPages.style.display = "flex";
+      clonedPages.style.opacity = "1";
+      clonedPages.style.zIndex = "-9999"; // Keep it hidden from the user
+
+      document.body.appendChild(clonedPages); // Append off-screen for rendering
+      document.body.appendChild(mask); // Add the mask to hide UI flicker
+      console.log('got here')
+      setTimeout(() => {
+        const doc = new jsPDF({
+          orientation: isA4 ? "portrait" : "landscape",
+          unit: "px",
+          format: isA4 ? "a4" : "a3",
+        });
+
+        const pageWidth = doc.internal.pageSize.getWidth(); // A4 full width
+
+        const pageHeight = doc.internal.pageSize.getHeight(); // A4 full height
+        const contentHeight = clonedPages.scrollHeight;
+        
+
+        // Adjust the scale based on the content size
+        const scale = pageWidth / originalContentWidth; // This will scale down width only
+        
+        const expectedPages = Math.ceil(
+          (contentHeight * scale + 50) / pageHeight
+        );
+        console.log("no ceil", (contentHeight * scale + 50) / pageHeight);
+        console.log("expected pages", expectedPages);
+
+        doc.html(clonedPages, {
+          x: 0, // Start from the left edge
+          y: 0, // Start from the top edge
+          html2canvas: {
+            // scale: scale, // Use calculated scale to fit
+            scale: scale,
+            
+            // width: pageWidth, // Full width of page
+            // height: pageHeight, // Full height of page
+            // windowWidth: clonedPages.scrollWidth, // Full width of the rendered content
+
+            letterRendering: true,
+            useCORS: true,
+            windowWidth: originalContentWidth,
+            // height: contentHeight,
+            height: clonedPages.scrollHeight,
+            windowHeight: 100,
+            scrollY: 0,
+            scrollX: 0,
+            devicePixelRatio: 1,
+            onclone: (clonedDoc) => {
+      const styles = clonedDoc.querySelectorAll("style, link[rel='stylesheet']");
+
+      styles.forEach(style => {
+        if (style.textContent?.includes("oklch")) {
+          style.remove();
+        }
+      });
+
+      clonedDoc.body.style.backgroundColor = "#ffffff";
+      clonedDoc.body.style.color = "#000000";
+    }
+  
+          },
+          autoPaging: "text",
+          callback: (doc) => {
+            
+            let totalPages = doc.getNumberOfPages();
+
+            // Update total pages after deletion
+            totalPages = doc.getNumberOfPages();
+            let lastContentPage = 1;
+
+            for (let i = 1; i <= totalPages; i++) {
+              doc.setPage(i);
+
+              const pageWidth = doc.internal.pageSize.getWidth();
+              const pageHeight = doc.internal.pageSize.getHeight();
+
+              doc.setFontSize(6);
+
+              // Bottom LEFT text
+              // doc.text(
+              //   `Os bens/serviços foram colocados à disposição do adquirente na data de ${format(
+              //     parseISO(this.responseDoc()?.created_at),
+              //     "dd-MM-yyyy"
+              //   )}`,
+              //   10,
+              //   pageHeight - 20
+              // ); // X=10 for left margin
+
+              doc.text(
+                type == "recibo"
+                  ? `${
+                      documento?.recibo_hash?.[0] +
+                      documento?.recibo_hash?.[11] +
+                      documento?.recibo_hash?.[21] +
+                      documento?.recibo_hash?.[31]
+                    }-Processado por programa validado nº ###/AGT/2025 Level-Invoice`
+                  : `${
+                      documento?.hash?.[0] +
+                      documento?.hash?.[11] +
+                      documento?.hash?.[21] +
+                      documento?.hash?.[31]
+                    }-Processado por programa validado nº ###/AGT/2025 Level-Invoice` +
+                      " | " +
+                      `Os bens/serviços foram colocados à disposição do adquirente na data de ${format(
+                        new Date(documento?.dataEmissao),
+                        "dd-MM-yyyy"
+                      )}`,
+                10,
+                pageHeight - 10
+              );
+
+              // Bottom RIGHT text
+              const pageLabel = `Página ${i}/${expectedPages}`;
+              const textWidth = doc.getTextWidth(pageLabel);
+              doc.text(pageLabel, pageWidth - 10 - textWidth, pageHeight - 10); // Right aligned with 10px margin
+              lastContentPage = i; // ✅ mark this as last real content page
+            }
+
+            document.body.removeChild(clonedPages);
+            document.body.removeChild(mask); // Remove mask
+            document.body.style.overflow = originalOverflow; // Restore body overflow
+
+            // this.loading.set(false); // Hide loading state
+            
+            toastSuccess(`Documento exportado com sucesso`)
+
+            console.log("lastttt contentttttt", lastContentPage);
+            const totalPagesAfterFooter = doc.getNumberOfPages();
+
+            for (let i = totalPages; i > expectedPages; i--) {
+              doc.deletePage(i);
+            }
+            // Open PDF in a new tab
+            const pdfBlobUrl = doc.output("bloburl");
+            // index == 0 && window.open(pdfBlobUrl, "_blank");
+            doc.save(
+              `${
+                documento?.tipoDocumento == "Factura" &&
+                type == "recibo"
+                  ? "Recibo__"
+                  : ""
+              }${
+                documento?.tipoDocumento +
+                " Nº " +
+                documento?.numeroDocumento
+              }___Segunda Via.pdf`
+            );
+            setLoad(false);
+
+            resolve();
+          },
+          // autoPaging: 'text',
+        });
+      }, 1000);
+  } // placeholder
     const navigateToDetails = (data, recibo) => {
         sessionStorage.setItem("factura", JSON.stringify(data));
     sessionStorage.setItem(
@@ -734,6 +1011,9 @@ const getLastPageProductIndex = () => {
             return count;
         }, 0);
     };
+     const extractPercentage = (item) => {
+        return parseFloat(item?.produto?.impostoFull?.taxa);
+    };
     const totalPagamentoValue = (field) => {
        
         return filteredPagamentos(documento?.pagamentos).reduce((count, item) => {
@@ -794,10 +1074,10 @@ const getLastPageProductIndex = () => {
                 <span className="value">{empresa?.num_contribuinte}</span>
               </div>
     
-              {documento?.polo?.website !== "" && (
+              {true  && (
                 <div className="pdfHeaderRow">
                   <span className="label">Website: </span>
-                  <span className="value">{documento?.polo?.website}</span>
+                  <span className="value">{documento?.polo?.website?? "N/A"}</span>
                 </div>
               )}
     
@@ -942,17 +1222,17 @@ const getLastPageProductIndex = () => {
                           {documento?.obs && documento?.obs !== "" && (
                             <>
                               <div style={{ fontWeight: 800 }}>Obs:</div>
-                              <div style={{ maxHeight: "25px" }}>{documento?.obs}</div>
+                              <div style={{ maxHeight: "21px" }}>{documento?.obs}</div>
                             </>
                           )}
                         </>
                       ) : (
                         <>
                           <div style={{ fontWeight: 800 }}>Obs:</div>
-                          <div style={{ maxHeight: "25px" }}>
+                          <div style={{ maxHeight: "21px" }}>
                             Este documento não serve de factura.
                             <br />
-                            {documento?.notas}
+                            {documento?.obs}
                           </div>
                         </>
                       )}
@@ -1012,10 +1292,10 @@ const getLastPageProductIndex = () => {
                 <span className="value">{empresa?.num_contribuinte}</span>
               </div>
     
-              {documento?.polo?.website !== "" && (
+              {true && (
                 <div className="pdfHeaderRow">
                   <span className="label">Website: </span>
-                  <span className="value">{documento?.polo?.website}</span>
+                  <span className="value">{documento?.polo?.website?? "N/A" }</span>
                 </div>
               )}
     
@@ -1150,7 +1430,9 @@ const getLastPageProductIndex = () => {
                 >
                   <img
                     // src={motivo ? responseDoc?.qr_code : responseDoc?.qr_code_recibo}
-                    src={documento?.qr_code_recibo}
+                    src={!documento?.factura_id
+                      ? documento?.qr_code_recibo
+                      : documento?.qr_code}
                     style={{
                       width: "100%",
                       height: "220px",
@@ -1167,11 +1449,11 @@ const getLastPageProductIndex = () => {
                   {documento?.tipoDocumento === "Factura Recibo" ||
                   documento?.tipoDocumento === "Factura" ||
                   documento?.tipoDocumento ==
-                    "Nota de crédito (anulação)" ? (
+                    "Nota de crédito (anulação)" || documento?.tipoDocumento == "Nota de crédito (retificação)" ? (
                     !documento?.factura_id ? (
                       <>
                         <div style={{ fontWeight: 800 }}>Obs:</div>
-                          <div style={{ maxHeight: '25px' }}>
+                          <div style={{ maxHeight: '21px' }}>
                             Através do(s) seguinte(s) meio(s) no valor total de {formatCurrency(totalPagamentoValue("valor"))}
                           </div>
                       </>
@@ -1182,7 +1464,7 @@ const getLastPageProductIndex = () => {
                             <div style={{ fontWeight: 800 }}>
                               Motivo de emissão:
                             </div>
-                            <div style={{ maxHeight: "25px" }}>
+                            <div style={{ maxHeight: "21px" }}>
                               {documento?.obs}
                             </div>
                           </>
@@ -1212,7 +1494,7 @@ const getLastPageProductIndex = () => {
                   ) : (
                     <>
                       <div style={{ fontWeight: 800 }}>Obs:</div>
-                      <div style={{ maxHeight: "25px" }}>
+                      <div style={{ maxHeight: "21px" }}>
                         Este documento não serve de factura.
                         <br />
                         {documento?.obs}
@@ -1871,10 +2153,10 @@ const getLastPageProductIndex = () => {
                                     <span className="label">NIF: </span>
                                     <span className="value">{empresa?.num_contribuinte}</span>
                                   </div>
-                                  {documento?.polo?.website !== '' && (
+                                  {true && (
                                     <div className="pdfHeaderRow">
                                       <span className="label">Website: </span>
-                                      <span className="value">{documento?.polo?.website}</span>
+                                      <span className="value">{documento?.polo?.website?? "N/A"}</span>
                                     </div>
                                   )}
                                   <div className="pdfHeaderRow">
@@ -1983,7 +2265,7 @@ const getLastPageProductIndex = () => {
                                         <section style={{ flex: 1 }}>
                                           {(documento?.tipoDocumento === 'Factura Recibo' || documento?.tipoDocumento === 'Factura') ? (
                                             <>
-                                              {(!documento?.notas || documento?.notas === '') && (
+                                              {(!documento?.obs || documento?.obs === '') && (
                                                 <>
                                                   <div style={{ opacity: 0, fontWeight: 800 }}>something</div>
                                                   <div style={{ opacity: 0 }}>something</div>
@@ -1992,7 +2274,7 @@ const getLastPageProductIndex = () => {
                                               {documento?.obs && documento?.obs !== '' && (
                                                 <>
                                                   <div style={{ fontWeight: 800 }}>Obs:</div>
-                                                  <div style={{ maxHeight: '25px' }}>
+                                                  <div style={{ maxHeight: '21px' }}>
                                                     {documento?.obs}
                                                   </div>
                                                 </>
@@ -2001,7 +2283,7 @@ const getLastPageProductIndex = () => {
                                           ) : (
                                             <>
                                               <div style={{ fontWeight: 800 }}>Obs:</div>
-                                              <div style={{ maxHeight: '25px' }}>
+                                              <div style={{ maxHeight: '21px' }}>
                                                 Este documento não serve de factura. <br />
                                                 {documento?.obs}
                                               </div>
@@ -2040,13 +2322,13 @@ const getLastPageProductIndex = () => {
                                 </tr>
                               </thead>
                               <tbody>
-                                {documentos?.produtos && [...documentos?.produtos||[]].length > 0 && 
-                                  [...documentos?.produtos||[]]
+                                {documento?.produtos && [...documento?.produtos||[]].length > 0 && 
+                                  [...documento.produtos||[]]
                                     .slice((pageIndex * itemsPerPage), (pageIndex * itemsPerPage) + itemsPerPage)
                                     .map((data, index) => {
                                       const globalIndex = index;
                                       const isLastPage = pageIndex + 1 === getTotalPages().length;
-                                      const isLastProduct = data?.index === [...documentos?.produtos||[]][[...documentos?.produtos||[]].length - 1]?.index;
+                                      const isLastProduct = data?.index === [...documento?.produtos||[]][[...documento?.produtos||[]].length - 1]?.index;
                                       
                                       return (
                                         <React.Fragment key={index}>
@@ -2502,6 +2784,345 @@ const getLastPageProductIndex = () => {
                     </div>
                   </div>
                 </div>
+
+
+                <div id="pdfContainerRecibo">
+                      <div style={{
+                        backgroundColor: 'white',
+                        gap: '10px',
+                        width: '100%',
+                        height: '100%',
+                        padding: '20px',
+                        paddingTop: '60px'
+                      }}>
+                        <div className="pdfHeader">
+                          {getTotalPagesRecibos().map((page, pageIndex) => (
+                            <React.Fragment key={pageIndex}>
+                              {true ? (
+                                <>
+                                  <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'flex-start',
+                                    paddingTop: '5px'
+                                  }}>
+                                    <div className="pdfLogo">
+                                      <img
+                              src={empresaImage ||
+                                        "https://media.licdn.com/dms/image/v2/D4D0BAQGL_YyfcXoDZA/company-logo_200_200/B4DZoqVSAMJAAI-/0/1761646813978/level_soft_angola_logo?e=1770854400&v=beta&t=GM8FbM7oioz63kgp7-nf2uBSuMikuHzW1A1jyr1Ecmo"}
+                              className="logo"
+                            />
+                                    </div>
+                                  </div>
+                
+                                  <div className="pdfCompanyTitle" style={{ marginTop: '20px' }}>
+                                    {empresa?.nome_empresa}
+                                  </div>
+                                  
+                                  <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'flex-start',
+                                    marginTop: '10px'
+                                  }}>
+                                    <div className="pdfCompanyInfo" style={{ flex: 1 }}>
+                                  <div className="pdfHeaderRow">
+                                    <span className="label">Localização: </span>
+                                    <span className="value">{documento?.polo?.localizacao}</span>
+                                  </div>
+                                  <div className="pdfHeaderRow">
+                                    <span className="label">NIF: </span>
+                                    <span className="value">{empresa?.num_contribuinte}</span>
+                                  </div>
+                                  {true && (
+                                    <div className="pdfHeaderRow">
+                                      <span className="label">Website: </span>
+                                      <span className="value">{documento?.polo?.website?? "N/A"}</span>
+                                    </div>
+                                  )}
+                                  <div className="pdfHeaderRow">
+                                    <span className="label">Email: </span>
+                                    <span className="value">{documento?.polo?.email}</span>
+                                  </div>
+                                  <div className="pdfHeaderRow">
+                                    <span className="label">Tel: </span>
+                                    <span className="value">{documento?.polo?.telemovel}</span>
+                                  </div>
+                                </div>
+                
+                                    <div className="pdfClientInfo" style={{ flex: 1 }}>
+                                      <div className="pdfHeaderRow">
+                                        <span className="label">Cliente: </span>
+                                        <span className="value">
+                                          {documento?.cliente?.nome || "Consumidor Final"}
+                                        </span>
+                                      </div>
+                                      <div className="pdfHeaderRow">
+                                        <span className="label">NIF: </span>
+                                        <span className="value">{documento?.cliente?.nif || "N/A"}</span>
+                                      </div>
+                                      <div className="pdfHeaderRow">
+                                        <span className="label">Localização: </span>
+                                        <span className="value">
+                                          {documento?.cliente?.localizacao || "N/A"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                
+                                  <div
+                                    className="table-responsive"
+                                    style={{
+                                      height: '100%',
+                                      paddingBottom: '80px',
+                                      overflowY: 'hidden',
+                                      marginTop: '50px'
+                                    }}
+                                  >
+                                    <table className="table table-gridjs" style={{ backgroundColor: 'white' }}>
+                                      <thead style={{ backgroundColor: 'white' }}>
+                                        <tr style={{ backgroundColor: 'white' }}>
+                                          <th colSpan="5" style={{
+                                            fontWeight: 700,
+                                            fontSize: '18px',
+                                            backgroundColor: 'white',
+                                            borderTop: 'none'
+                                          }}>
+                                            {`Recibo Nº ${documento?.numeroRecibo}`}
+                                          </th>
+                                          <th style={{
+                                            fontSize: '13px',
+                                            backgroundColor: 'white',
+                                            borderTop: 'none',
+                                            textAlign: 'right',
+                                            fontWeight: 600
+                                          }}>
+                                            Segunda Via
+                                          </th>
+                                        </tr>
+                                        <tr style={{ backgroundColor: 'white', fontWeight: '500' }}>
+                                          <th style={{ backgroundColor: 'white' }}>Data Emi.</th>
+                                          <th style={{ backgroundColor: 'white' }}>NIF</th>
+                                          <th style={{ backgroundColor: 'white' }}>V/ Ref.</th>
+                                          <th style={{ backgroundColor: 'white' }}>Documento ref..</th>
+                                          <th style={{ backgroundColor: 'white' }}>Valor doc.</th>
+                                          <th style={{ backgroundColor: 'white', maxWidth: '220px', width: '220px' }}></th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        <tr>
+                                          <td>{format(new Date(documento?.dataEmissaoRecibo||null), 'dd-MM-yyyy')}</td>
+                                          {/* <td>
+                                            {tipoDocumento === 'Factura Recibo' ? 'N/A' : format(new Date(dataValidade?.length > 0 ? dataValidade : null), 'dd-MM-yyyy')}
+                                          </td> */}
+                                          <td>
+                                            {documento?.cliente?.nif || "N/A"}
+                                          </td>
+                                          <td>
+                                            {documento?.numeroRecibo}
+                                          </td>
+                                          <td>
+                                            {documento?.numeroDocumento}
+                                          </td>
+                                          <td>
+                                            {formatCurrency(totalValue?.('total'))}
+                                          </td>
+                                          <td rowSpan={2} style={{border: 'none'}}>
+                                <div
+                                  className="qrContainer"
+                                  style={{
+                                    padding: 0,
+                                    height: "80px",
+                                    transform: "translateY(-55px)",
+                                  }}
+                                >
+                                  <img
+                                    src={documento?.qr_code_recibo}
+                                    style={{
+                                      width: "100%",
+                                      height: "220px",
+                                      objectFit: "contain",
+                                    }}
+                                  />
+                                </div>
+                              </td>
+                                        </tr>
+                
+                                        <tr>
+                                          <td colSpan="4" style={{ borderBottom: 'none' }}>
+                                            <section style={{ flex: 1 }}>
+                                              {(documento?.tipoDocumento === 'Factura Recibo' || documento?.tipoDocumento === 'Factura') ? (
+                                                <>
+                                                 
+                                                  {true && (
+                                                    <>
+                                                      <div style={{ fontWeight: 800 }}>Obs:</div>
+                                                      <div style={{ maxHeight: '21px' }}>
+                                                        Através do(s) seguinte(s) meio(s) no valor total de {formatCurrency(totalPagamentoValue("valor"))}
+                                                      </div>
+                                                    </>
+                                                  )}
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <div style={{ fontWeight: 800 }}>Obs:</div>
+                                                  <div style={{ maxHeight: '21px' }}>
+                                                    Este documento não serve de factura. <br />
+                                                    {documento?.obs}
+                                                  </div>
+                                                </>
+                                              )}
+                                            </section>
+                                          </td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </>
+                              ) : (
+                                HeaderTemplateRecibo()
+                              )}
+                
+                              <div
+                                className="table-responsive"
+                                style={{
+                                  height: '100%',
+                                  paddingBottom: '80px',
+                                  overflowY: 'hidden',
+                                  marginTop: '-15px'
+                                }}
+                              >
+                                <table className="table table-gridjs" style={{ backgroundColor: 'white' }}>
+                                  <thead style={{ background: 'white' }}>
+                                    <tr style={{ backgroundColor: 'white' }}>
+                                      <th style={{ maxWidth: '20px', width: '20px', backgroundColor: 'white' }}>#</th>
+                                      <th style={{ backgroundColor: 'white' }}>Forma de pag.</th>
+                                      <th style={{ backgroundColor: 'white' }}>Banco</th>
+                                      <th style={{ backgroundColor: 'white' }}>Data</th>
+                                      <th style={{ backgroundColor: 'white' }}>Ref. do pag..</th>
+                                      <th style={{ backgroundColor: 'white' }}>Valor</th>
+                                      {/* <th style={{ backgroundColor: 'white' }}>Total</th> */}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {filteredPagamentos(documento?.pagamentos)?.length > 0 && 
+                                      filteredPagamentos(documento?.pagamentos)
+                                        .slice((pageIndex * itemsPerPage), (pageIndex * itemsPerPage) + itemsPerPage)
+                                        .map((data, index) => {
+                                          const globalIndex = index;
+                                          const isLastPage = pageIndex + 1 === getTotalPagesRecibos().length;
+                                          const isLastProduct = data?.index == filteredPagamentos(documento?.pagamentos).length;
+                                          return (
+                                            <React.Fragment key={index}>
+                                              <tr>
+                                                <td>
+                                                  <div>{data?.index + ''}</div>
+                                                </td>
+                                                <td>
+                                                  <div
+                                                    style={{
+                                                      
+                                                      border: 'none'
+                                                    }}
+                                                    title={data?.tipoPagamento||"-"}
+                                                  >
+                                                    {data?.tipoPagamento||"-"}
+                                                  </div>
+                                                </td>
+                                                <td>
+                                                  <div>{data?.banco||"-"}</div>
+                                                </td>
+                                                <td>
+                                                  <div>{data?.dataPagamento ? format(new Date(data?.dataPagamento), 'dd/MM/yyy')  : "-"}</div>
+                                                </td>
+                                                <td>
+                                                  <div>{data?.referencia||"-"}</div>
+                                                </td>
+                                                <td>
+                                                  <div>
+                                                    {data?.valor ? formatCurrency(data?.valor)  : "AOA 0"}
+                                                  </div>
+                                                </td>
+                                                
+                                              </tr>
+                
+                                              {((globalIndex + 1) === 17 || (globalIndex > 18 && ((globalIndex - 17 + 1) % 31 === 0))) && (
+                                                <tr style={{ 
+                                                  border: 'none',
+                                                  height: (globalIndex > 17 && ((globalIndex - 17 + 1) % 31 === 0)) ? '76px' : '56px'
+                                                }}>
+                                                  <td style={{ border: 'none' }} colSpan="18" className="page-break">
+                                                    <div style={{ pageBreakAfter: 'always' }}></div>
+                                                  </td>
+                                                </tr>
+                                              )}
+                
+                                              {isLastPage && isLastProduct && (index + 1 === 14 || index + 1 === 15 || index + 1 === 16) && (
+                                                <tr style={{ 
+                                                  border: 'none',
+                                                  height: index + 1 === 14 ? '194px' 
+                                                        : index + 1 === 15 ? '146px'
+                                                        : '100px'
+                                                }}>
+                                                  <td style={{ border: 'none' }} colSpan="18" className="page-break">
+                                                    <div style={{ pageBreakAfter: 'always' }}></div>
+                                                  </td>
+                                                </tr>
+                                              )}
+                                            </React.Fragment>
+                                          );
+                                        })
+                                    }
+                                  </tbody>
+                                </table>
+                              </div>
+                            </React.Fragment>
+                          ))}
+                
+                          {[14, 15, 16, 17].includes(getLastPageProductIndexRecibos()) && (
+                            HeaderTemplateRecibo()
+                          )}
+                
+                          <div className="bottom" style={{ 
+                            marginTop: [14, 15, 16, 17].includes(getLastPageProductIndexRecibos()) ? '-20px' : '-55px'
+                          }}>
+                           
+                            <div style={{ flex: 1 }}></div>
+                            
+                
+                            <div className="totals" style={{ 
+                              backgroundColor: 'white', 
+                              border: 'none', 
+                              marginTop: '-20px' 
+                            }}>
+                              <div className="totalRow">
+                                <span className="label">Total a pagar:</span>
+                                <span className="value">
+                                  {formatCurrency(
+                                    totalValue?.('total')
+                                  )}
+                                </span>
+                              </div>
+                              <div className="totalRow">
+                                <span className="label">Total recebido:</span>
+                                <span className="value">
+                                  {formatCurrency(totalPagamentoValue?.('valor'))}
+                                </span>
+                              </div>
+                              
+                              <div className="totalRow1">
+                                <span className="label1">Crédito sobrando:</span>
+                                <span className="value">
+                                  {formatCurrency(totalValue?.('total') - totalPagamentoValue('valor'))}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                
+                          
+                        </div>
+                      </div>
+                    </div>
         </>
     );
 };
