@@ -72,7 +72,7 @@ const NovoDocumento = () => {
     const totalValue = (field) => {
         return (
   done === true && responseDoc1?.nota && responseDoc1?.factura && load && Array.isArray(responseDoc?.produtos)
-    ? responseDoc.produtos.concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos)
+    ? responseDoc.produtos
     : selectedProdutos
 )?.reduce((count, item) => {
             if (
@@ -1089,7 +1089,7 @@ const getTotalPages = () => {
     return Array(
       Math.ceil((
   done === true && responseDoc1?.nota && responseDoc1?.factura && load && Array.isArray(responseDoc?.produtos)
-    ? responseDoc.produtos.concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos)
+    ? responseDoc.produtos
     : selectedProdutos
 )?.length / itemsPerPage)
     ).fill("");
@@ -1106,7 +1106,7 @@ const getTotalPages = () => {
   const getLastPageProductIndex = () => {
     const totalItems = (
   done === true && responseDoc1?.nota && responseDoc1?.factura && load && Array.isArray(responseDoc?.produtos)
-    ? responseDoc.produtos.concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos)
+    ? responseDoc.produtos
     : selectedProdutos
 )?.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -1146,7 +1146,7 @@ const getTotalPages = () => {
 
     (
   done === true && responseDoc1?.nota && responseDoc1?.factura && load && Array.isArray(responseDoc?.produtos)
-    ? responseDoc.produtos.concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos).concat(responseDoc.produtos)
+    ? responseDoc.produtos
     : selectedProdutos
 ).forEach((item) => {
       const taxa = item?.produto?.impostoFull?.taxa ?? "N/A";
@@ -1252,7 +1252,7 @@ const getTotalPages = () => {
           index: index + 1
         }
       })
-      setSelectedProdutos(facturaProdutos.concat(facturaProdutos).concat(facturaProdutos).concat(facturaProdutos).concat(facturaProdutos));
+      setSelectedProdutos(facturaProdutos);
       const facturaPagamentos = [...(factura?.pagamentos || [])].map(pagamento => ({
         banco: pagamento?.banco || "",
         tipoPagamento: pagamento?.tipoPagamento || "",
@@ -4101,7 +4101,7 @@ const HeaderTemplate = () => {
                   </thead>
                   <tbody>
                     {responseDoc?.produtos && [...responseDoc?.produtos||[]].length > 0 && 
-                      [...responseDoc?.produtos||[]].concat([...responseDoc?.produtos||[]].concat([...responseDoc?.produtos||[]]).concat([...responseDoc?.produtos||[]]))
+                      [...responseDoc?.produtos||[]]
                         .slice((pageIndex * itemsPerPage), (pageIndex * itemsPerPage) + itemsPerPage)
                         .map((data, index) => {
                           const globalIndex = index;
