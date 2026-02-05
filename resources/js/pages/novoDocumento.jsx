@@ -1459,6 +1459,7 @@ const getTotalPages = () => {
     };
 
   }, [responseDoc, responseDoc1])
+  //
 //   useEffect(() => {
 //     const patchHtml2CanvasColor = () => {
 //   const w = window;
