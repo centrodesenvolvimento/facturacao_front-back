@@ -448,7 +448,8 @@ clonedPages.style.maxWidth = `${originalContentWidth * DPR}px`;
         
 
         // Adjust the scale based on the content size
-        const scale = pageWidth / originalContentWidth; // This will scale down width only
+        const scale = 0.4058727272727273; // This will scale down width only]
+        console.trace('scale', scale)
         
         const expectedPages = Math.ceil(
           (contentHeight * scale + 50) / pageHeight
@@ -461,7 +462,8 @@ clonedPages.style.maxWidth = `${originalContentWidth * DPR}px`;
           y: 0, // Start from the top edge
           html2canvas: {
             // scale: scale, // Use calculated scale to fit
-            scale: scale,
+            scale: 0.4058727272727273,
+            logging: true,
             
             // width: pageWidth, // Full width of page
             // height: pageHeight, // Full height of page
@@ -475,7 +477,7 @@ clonedPages.style.maxWidth = `${originalContentWidth * DPR}px`;
             windowHeight: 100,
             scrollY: 0,
             scrollX: 0,
-            devicePixelRatio: 1,
+            
             onclone: (clonedDoc) => {
       const styles = clonedDoc.querySelectorAll("style, link[rel='stylesheet']");
 

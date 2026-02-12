@@ -184,9 +184,9 @@ let apiUrl1 =
   xml += `    <CompanyName>${empresa?.nome_empresa}</CompanyName>\n`;
   xml += `    <BusinessName>${empresa?.designacao_comercial}</BusinessName>\n`;
   xml += `    <CompanyAddress>\n`;
-  xml += `      <AddressDetail>${polo?.localizacao}</AddressDetail>\n`;
+  xml += `      <AddressDetail>${polo?.localizacao || 'Desconhecido'}</AddressDetail>\n`;
   xml += `      <City>Desconhecido</City>\n`;
-  xml += `      <Province>${polo?.provincia}</Province>\n`;
+  xml += `      <Province>${polo?.provincia|| 'Desconhecido'}</Province>\n`;
   xml += `      <Country>${empresa?.pais}</Country>\n`;
   xml += `    </CompanyAddress>\n`;
   xml += `    <FiscalYear>${new Date().getFullYear()}</FiscalYear>\n`;
@@ -195,16 +195,37 @@ let apiUrl1 =
   xml += `    <CurrencyCode>AOA</CurrencyCode>\n`;
   xml += `    <DateCreated>${now}</DateCreated>\n`;
   xml += `    <TaxEntity>GLOBAL</TaxEntity>\n`;
-  xml += `    <ProductCompanyTaxID>Não sei</ProductCompanyTaxID>\n`;
-  xml += `    <SoftwareValidationNumber>Não sei</SoftwareValidationNumber>\n`;
-  xml += `    <ProductID>Não sei</ProductID>\n`;
-  xml += `    <ProductVersion>Não sei</ProductVersion>\n`;
-  xml += `    <Telephone>Não sei</Telephone>\n`;
-  xml += `    <Email>Não sei</Email>\n`;
-  xml += `  </Header>\n\n`;
+  // xml += `    <ProductCompanyTaxID>Não sei</ProductCompanyTaxID>\n`;
+  // xml += `    <SoftwareValidationNumber>Não sei</SoftwareValidationNumber>\n`;
+  // xml += `    <ProductID>Não sei</ProductID>\n`;
+  // xml += `    <ProductVersion>Não sei</ProductVersion>\n`;
+  // xml += `    <Telephone>Não sei</Telephone>\n`;
+  // xml += `    <Email>Não sei</Email>\n`;
+  // xml += `  </Header>\n\n`;
 
+  //produtor do software info
+  const productInfo = response?.productorSoftware || {
+    nif: '5000000000',
+    numero_validacao: 'SAFT/2024/001',
+    nome_aplicacao: 'Level-Invoice',
+    versao: '1.0.0',
+    telemovel: '000000000',
+    email: 'suporte@levelsoft.ao',
+    website: 'https://levelsoft.ao/'
+  };
+  
+  xml += `    <ProductCompanyTaxID>${productInfo.nif}</ProductCompanyTaxID>\n`;
+  xml += `    <SoftwareValidationNumber>${productInfo.numero_validacao}</SoftwareValidationNumber>\n`;
+  xml += `    <ProductID>${productInfo.nome_aplicacao}</ProductID>\n`;
+  xml += `    <ProductVersion>${productInfo.versao}</ProductVersion>\n`;
+  xml += `    <Telephone>${productInfo.telemovel}</Telephone>\n`;
+  xml += `    <Email>${productInfo.email}</Email>\n`;
+  xml += `    <Website>${productInfo.website}</Website>\n`;
+  xml += `  </Header>\n\n`;
   // MASTER FILES
   xml += `  <MasterFiles>\n`;
+  let totalDebit = 0;
+  let totalCredit = 0;
 
   // Collect unique clients and products
   let uniqueClientes = new Set();
@@ -215,7 +236,20 @@ let apiUrl1 =
   [...response?.documentos || []].forEach((i) => {
     if (i?.produtos && [...i?.produtos || []].length > 0) {
       [...i?.produtos || []].forEach((prod) => {
-        uniqueProdutos.add(prod?.produto?.id);
+        console.log('hellooooo prod', prod);
+        let prodTotal = parseFloat(`${prod?.preco}`) * parseFloat(`${prod?.quantidade}`);
+        let desconto = parseFloat(`${prod?.descontoFinal || 0}`); 
+        let imposto = parseFloat(`${prod?.taxaImposto || 0}`);
+        // let taxAmount = (prodTotal) * (imposto / 100);
+        // totalDebit += prodTotal - desconto + taxAmount;
+        // totalCredit += prodTotal - desconto + imposto;
+        if (['NCR', 'NC'].includes(i?.numeroDocumento?.split(" ")[0])) {
+          totalDebit += prodTotal - desconto + imposto;
+        }else {
+          totalCredit += prodTotal - desconto + imposto;
+        }
+
+        uniqueProdutos.add(prod?.produto);
       });
     }
   });
@@ -264,7 +298,7 @@ let apiUrl1 =
     });
 
   // Products/Services
-  response?.produtos?.filter((prod) => Array.from(uniqueProdutos).some((i) => i == prod?.id))
+  Array.from(uniqueProdutos)
     .forEach((artigo) => {
       xml += `    <Product>\n`;
       xml += `      <ProductType>${artigo?.tipoArtigoFull?.designacao}</ProductType>\n`;
@@ -276,6 +310,8 @@ let apiUrl1 =
     });
 
   // Tax Table
+
+  xml += `    <TaxTable>\n`;
   response?.taxas.forEach((taxa) => {
     xml += `    <TaxTableEntry>\n`;
     xml += `      <TaxType>${taxa?.tipo}</TaxType>\n`;
@@ -285,6 +321,8 @@ let apiUrl1 =
     xml += `      <TaxPercentage>${taxa?.taxa}</TaxPercentage>\n`;
     xml += `    </TaxTableEntry>\n`;
   });
+  xml += `    </TaxTable>\n`;
+
 
   xml += `  </MasterFiles>\n\n`;
 
@@ -292,6 +330,8 @@ let apiUrl1 =
   xml += `  <SourceDocuments>\n`;
   xml += `    <SalesInvoices>\n`;
   xml += `      <NumberOfEntries>${[...(response?.documentos || [])].length}</NumberOfEntries>\n`;
+    xml += `      <TotalDebit>${totalDebit.toFixed(2)}</TotalDebit>\n`;
+  xml += `      <TotalCredit>${totalCredit.toFixed(2)}</TotalCredit>\n`;
 
   // Loop through documents
   [...(response?.documentos || [])].forEach((doc, index) => {
@@ -301,7 +341,7 @@ let apiUrl1 =
     xml += `        <DocumentStatus>\n`;
     xml += `          <InvoiceStatus>N</InvoiceStatus>\n`;
     xml += `          <InvoiceStatusDate>${new Date(doc?.dataEmissao).toISOString()}</InvoiceStatusDate>\n`;
-    xml += `          <SourceID>${doc?.cliente?.nome}</SourceID>\n`;
+    xml += `        <SourceID>${doc?.cliente?.nome || 'Consumidor Final'}</SourceID>\n`;
     xml += `          <SourceBilling>${tipoSaft}</SourceBilling>\n`;
     xml += `        </DocumentStatus>\n`;
     // Hash info
@@ -313,8 +353,18 @@ let apiUrl1 =
     xml += `        <InvoiceDate>${new Date(doc?.dataEmissao).toISOString().split("T")[0]}</InvoiceDate>\n`;
     // Invoice type
     xml += `        <InvoiceType>${doc?.numeroDocumento?.split(" ")[0]}</InvoiceType>\n`;
+    xml += `        <SpecialRegimes>\n`;
+    xml += `          <SelfBillingIndicator>0</SelfBillingIndicator>\n`;
+    xml += `          <CashVATSchemeIndicator>0</CashVATSchemeIndicator>\n`;
+    xml += `          <ThirdPartiesBillingIndicator>0</ThirdPartiesBillingIndicator>\n`;
+    xml += `        </SpecialRegimes>\n`;
+
+    // xml += `        <SourceID>${doc?.cliente?.nome || 'Consumidor Final'}</SourceID>\n`;
+      xml += `          <SystemEntryDate>${new Date(doc?.dataEmissao).toISOString()}</SystemEntryDate>\n`;
+
+
     // Customer ID
-    xml += `        <CustomerID>${doc?.cliente?.nome}</CustomerID>\n`;
+    xml += `        <CustomerID>${doc?.cliente?.nif || '999999999'}</CustomerID>\n`;
 
     if (doc?.produtos && [...(doc?.produtos || [])].length > 0) {
       [...(doc?.produtos || [])].forEach((item, lineIdx) => {
@@ -326,9 +376,14 @@ let apiUrl1 =
         xml += `          <UnitOfMeasure>${item?.produto?.unidadeFull ? item?.produto?.unidadeFull?.abreviacao : "N/A"}</UnitOfMeasure>\n`;
         xml += `          <UnitPrice>${item?.preco}</UnitPrice>\n`;
         xml += `          <TaxPointDate>${new Date(doc?.dataEmissao).toISOString().split("T")[0]}</TaxPointDate>\n`;
-        xml += `          <Description>${item?.descricao}</Description>\n`;
+        xml += `          <Description>${item?.produto?.descricao}</Description>\n`;
         xml += `          <ProductSerialNumber><SerialNumber>Desconhecido</SerialNumber></ProductSerialNumber>\n`;
-        xml += `          <CreditAmount>${parseFloat(`${item?.preco}`) * parseFloat(`${item?.quantidade}`)}</CreditAmount>\n`;
+        
+        if (['NCR', 'NC'].includes(doc?.numeroDocumento?.split(" ")[0])) {
+          xml += `          <DebitAmount>${(parseFloat(`${item?.preco}`) * parseFloat(`${item?.quantidade}`))-parseFloat(`${item?.descontoFinal || 0}`)}</DebitAmount>\n`;
+        }else {
+          xml += `          <CreditAmount>${(parseFloat(`${item?.preco}`) * parseFloat(`${item?.quantidade}`))-parseFloat(`${item?.descontoFinal || 0}`)}</CreditAmount>\n`;
+        }
         // Tax details
         xml += `          <Tax>\n`;
         xml += `            <TaxType>${item?.produto?.impostoFull ? item?.produto?.impostoFull?.tipo : "N/A"}</TaxType>\n`;
@@ -350,10 +405,11 @@ let apiUrl1 =
     }
 
     const totalNet = [...(doc?.produtos || [])].reduce((sum, itm) => sum + itm?.total, 0);
+    console.trace('doc', doc)
     xml += `        <DocumentTotals>\n`;
-    xml += `          <TaxPayable>${[...(doc?.produtos || [])].reduce((sum, itm) => sum + (itm?.taxaImposto || 0), 0)}</TaxPayable>\n`;
-    xml += `          <NetTotal>${totalNet.toFixed(2)}</NetTotal>\n`;
-    xml += `          <GrossTotal>${[...(doc?.produtos || [])].reduce((sum, itm) => sum + parseFloat(`${itm?.preco}`) * parseFloat(`${itm?.quantidade}`), 0)}</GrossTotal>\n`;
+    xml += `          <TaxPayable>${parseFloat(`${doc?.totalImpostos}`)}</TaxPayable>\n`;
+    xml += `          <NetTotal>${(parseFloat(`${doc?.totalPagar}`) - parseFloat(`${doc?.totalImpostos}`)).toFixed(2)}</NetTotal>\n`;
+    xml += `          <GrossTotal>${(parseFloat(`${doc?.totalPagar}`))}</GrossTotal>\n`;
     xml += `        </DocumentTotals>\n`;
     xml += `      </Invoice>\n`;
   });
