@@ -300,7 +300,7 @@ class FacturaController extends Controller
         $fixedLetter = 'OF';
         switch ($request->factura['tipoDocumento']) {
             case 'Factura':
-                $fixedLetter = 'FA';
+                $fixedLetter = 'FT';
                 break;
             case 'Factura Recibo':
                 $fixedLetter = 'FR';
@@ -453,7 +453,7 @@ $factura->save();
         $fixedLetter = 'OF';
         switch ($request->tipoDocumento) {
             case 'Factura':
-                $fixedLetter = 'FA';
+                $fixedLetter = 'FT';
                 break;
             case 'Factura Recibo':
                 $fixedLetter = 'FR';
@@ -624,7 +624,7 @@ $factura->qr_code = 'data:image/png;base64,' . base64_encode($png);
                 $fixedLetter = 'NC';
                 break;
             case 'Nota de crédito (retificação)':
-                $fixedLetter = 'NCR';
+                $fixedLetter = 'NC';
                 break;
             default:
                 $fixedLetter = 'ON';
@@ -777,7 +777,7 @@ $nota->save();
                 $fixedLetter = 'NC';
                 break;
             case 'Nota de crédito (retificação)':
-                $fixedLetter = 'NCR';
+                $fixedLetter = 'NC';
                 break;
             default:
                 $fixedLetter = 'ON';

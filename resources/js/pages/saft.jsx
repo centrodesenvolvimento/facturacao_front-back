@@ -180,18 +180,18 @@ let apiUrl1 =
   xml += `    <AuditFileVersion>1.01_01</AuditFileVersion>\n`;
   xml += `    <CompanyID>${empresa?.registo_comercial}</CompanyID>\n`;
   xml += `    <TaxRegistrationNumber>${empresa?.num_contribuinte}</TaxRegistrationNumber>\n`;
-  xml += `    <TaxAccountingBasis>${empresa?.tipo}</TaxAccountingBasis>\n`;
+  xml += `    <TaxAccountingBasis>${false ? empresa?.tipo : 'F'}</TaxAccountingBasis>\n`;
   xml += `    <CompanyName>${empresa?.nome_empresa}</CompanyName>\n`;
   xml += `    <BusinessName>${empresa?.designacao_comercial}</BusinessName>\n`;
   xml += `    <CompanyAddress>\n`;
   xml += `      <AddressDetail>${polo?.localizacao || 'Desconhecido'}</AddressDetail>\n`;
   xml += `      <City>Desconhecido</City>\n`;
   xml += `      <Province>${polo?.provincia|| 'Desconhecido'}</Province>\n`;
-  xml += `      <Country>${empresa?.pais}</Country>\n`;
+  xml += `      <Country>${empresa?.pais||'AO'}</Country>\n`;
   xml += `    </CompanyAddress>\n`;
   xml += `    <FiscalYear>${new Date().getFullYear()}</FiscalYear>\n`;
-  xml += `    <StartDate>${format(new Date(dateRange[0]), "dd/MM/yyyy")}</StartDate>\n`;
-  xml += `    <EndDate>${format(new Date(dateRange[1]), "dd/MM/yyyy")}</EndDate>\n`;
+  xml += `    <StartDate>${format(new Date(dateRange[0]), "yyyy-MM-dd")}</StartDate>\n`;
+  xml += `    <EndDate>${format(new Date(dateRange[1]), "yyyy-MM-dd")}</EndDate>\n`;
   xml += `    <CurrencyCode>AOA</CurrencyCode>\n`;
   xml += `    <DateCreated>${now}</DateCreated>\n`;
   xml += `    <TaxEntity>GLOBAL</TaxEntity>\n`;
@@ -206,8 +206,8 @@ let apiUrl1 =
   //produtor do software info
   const productInfo = response?.productorSoftware || {
     nif: '5000000000',
-    numero_validacao: 'SAFT/2024/001',
-    nome_aplicacao: 'Level-Invoice',
+    numero_validacao: '0',
+    nome_aplicacao: 'Level/Invoice',
     versao: '1.0.0',
     telemovel: '000000000',
     email: 'suporte@levelsoft.ao',
@@ -233,9 +233,15 @@ let apiUrl1 =
     if (i?.cliente_id) uniqueClientes.add(i?.cliente_id);
   });
   let uniqueProdutos = new Set();
+  const uniqueProdutosMap = new Map();
+
   [...response?.documentos || []].forEach((i) => {
     if (i?.produtos && [...i?.produtos || []].length > 0) {
       [...i?.produtos || []].forEach((prod) => {
+
+        if (!uniqueProdutosMap.has(prod.produto.id)) {
+      uniqueProdutosMap.set(prod.produto.id, prod.produto);
+    }
         console.log('hellooooo prod', prod);
         let prodTotal = parseFloat(`${prod?.preco}`) * parseFloat(`${prod?.quantidade}`);
         let desconto = parseFloat(`${prod?.descontoFinal || 0}`); 
@@ -253,6 +259,7 @@ let apiUrl1 =
       });
     }
   });
+  
 
   // Customers
   xml += `    <Customer>\n`;
@@ -298,10 +305,10 @@ let apiUrl1 =
     });
 
   // Products/Services
-  Array.from(uniqueProdutos)
+  Array.from(uniqueProdutosMap.values())
     .forEach((artigo) => {
       xml += `    <Product>\n`;
-      xml += `      <ProductType>${artigo?.tipoArtigoFull?.designacao}</ProductType>\n`;
+      xml += `      <ProductType>${artigo?.tipoArtigoFull?.designacao[0]}</ProductType>\n`;
       xml += `      <ProductCode>${artigo?.id}</ProductCode>\n`;
       xml += `      <ProductGroup>Descochecido</ProductGroup>\n`;
       xml += `      <ProductDescription>${artigo?.designacao}</ProductDescription>\n`;
@@ -341,7 +348,7 @@ let apiUrl1 =
     xml += `        <DocumentStatus>\n`;
     xml += `          <InvoiceStatus>N</InvoiceStatus>\n`;
     xml += `          <InvoiceStatusDate>${new Date(doc?.dataEmissao).toISOString()}</InvoiceStatusDate>\n`;
-    xml += `        <SourceID>${doc?.cliente?.nome || 'Consumidor Final'}</SourceID>\n`;
+    xml += `        <SourceID>System</SourceID>\n`;
     xml += `          <SourceBilling>${tipoSaft}</SourceBilling>\n`;
     xml += `        </DocumentStatus>\n`;
     // Hash info
@@ -359,7 +366,7 @@ let apiUrl1 =
     xml += `          <ThirdPartiesBillingIndicator>0</ThirdPartiesBillingIndicator>\n`;
     xml += `        </SpecialRegimes>\n`;
 
-    // xml += `        <SourceID>${doc?.cliente?.nome || 'Consumidor Final'}</SourceID>\n`;
+    xml += `        <SourceID>System</SourceID>\n`;
       xml += `          <SystemEntryDate>${new Date(doc?.dataEmissao).toISOString()}</SystemEntryDate>\n`;
 
 
@@ -395,9 +402,6 @@ let apiUrl1 =
         if (item?.produto?.isencaoFull?.id) {
           xml += `          <TaxExemptionReason>${item?.produto?.isencaoFull?.mencao_na_factura}</TaxExemptionReason>\n`;
           xml += `          <TaxExemptionCode>${item?.produto?.isencaoFull?.codigo}</TaxExemptionCode>\n`;
-        } else {
-          xml += `          <TaxExemptionReason></TaxExemptionReason>\n`;
-          xml += `          <TaxExemptionCode></TaxExemptionCode>\n`;
         }
         xml += `          <SettlementAmount>0</SettlementAmount>\n`;
         xml += `        </Line>\n`;
