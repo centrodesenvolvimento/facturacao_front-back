@@ -241,11 +241,11 @@ let apiUrl1 =
 
   [...response?.documentos || []].forEach((i) => {
 
-    if (['NCR', 'NC'].includes(i?.numeroDocumento?.split(" ")[0])) {
-          totalDebit += i?.totalPagar ? parseFloat(`${i?.totalPagar}`) : 0;
-        }else {
-          totalCredit += i?.totalPagar ? parseFloat(`${i?.totalPagar}`) : 0;
-        }
+    // if (['NCR', 'NC'].includes(i?.numeroDocumento?.split(" ")[0])) {
+    //       totalDebit += i?.totalPagar ? parseFloat(`${i?.totalPagar}`) : 0;
+    //     }else {
+    //       totalCredit += i?.totalPagar ? parseFloat(`${i?.totalPagar}`) : 0;
+    //     }
     if (i?.produtos && [...i?.produtos || []].length > 0) {
       [...i?.produtos || []].forEach((prod) => {
         
@@ -261,7 +261,13 @@ let apiUrl1 =
         // let taxAmount = (prodTotal) * (imposto / 100);
         // totalDebit += prodTotal - desconto + taxAmount;
         // totalCredit += prodTotal - desconto + imposto;
-        
+        if (['NCR', 'NC'].includes(i?.numeroDocumento?.split(" ")[0])) {
+          totalDebit += ((parseFloat(`${prod?.preco}`) * parseFloat(`${prod?.quantidade}`)) - parseFloat(`${prod?.descontoFinal || 0}`));
+          // totalDebit += i?.totalPagar ? parseFloat(`${i?.totalPagar}`) : 0;
+        }else {
+          totalCredit += ((parseFloat(`${prod?.preco}`) * parseFloat(`${prod?.quantidade}`)) - parseFloat(`${prod?.descontoFinal || 0}`)) ;
+          // totalCredit += i?.totalPagar ? parseFloat(`${i?.totalPagar}`) : 0;
+        }
 
         uniqueProdutos.add(prod?.produto);
       });
