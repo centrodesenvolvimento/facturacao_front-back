@@ -897,7 +897,7 @@ const restoreStyles = disableStylesheets();
     const [successTitle, setSuccessTitle] = useState("");
     const [successDescription, setSuccessDescription] = useState("");
 
-    const createDoc = () => {
+    const createDoc = (bypassPagamento = false) => {
   setSuccessContinue(false);
 
   const consumidorFinalException =
@@ -1018,7 +1018,7 @@ const totalPagar = totalValue("total");
     })
   
 };
-const saveDoc = () => {
+const saveDoc = (bypassRecibo = false) => {
   setSuccessContinue(false)
   if (
     reciboParam &&
@@ -1305,6 +1305,8 @@ const getTotalPages = () => {
       console.trace('facturaaaaa', factura)
       setTipoNota(factura?.tipoDocumento)
       setDocumentoOrigem(factura?.factura?.numeroDocumento)
+      setSelectedCliente(clientes.find((c) => c.id == factura?.cliente_id) || null)
+
       setDataNota(format(new Date(factura?.dataEmissao), "yyyy-MM-dd"))
       setMotivo(factura?.obs || "")
       if (factura?.tipoDocumento != "Nota de crédito (anulação)"){
@@ -1322,10 +1324,14 @@ const getTotalPages = () => {
     if (searchParams.get('nota')) {
       setDocumentoOrigem(factura?.numeroDocumento)
     setDataNota(format(new Date(), 'yyyy-MM-dd'))
+          setSelectedCliente(clientes.find((c) => c.id == factura?.cliente_id) || null)
+
 
       if (factura?.factura_id >= 0) {
         setTipoNota(factura?.tipoDocumento)
         setDocumentoOrigem(factura?.factura?.numeroDocumento)
+              setSelectedCliente(clientes.find((c) => c.id == factura?.cliente_id) || null)
+
         setDataNota(format(new Date(factura?.dataEmissao), 'yyyy-MM-dd'))
         setMotivo(factura?.obs)
         if (factura?.tipoDocumento != "Nota de crédito (anulação)"){
@@ -1336,7 +1342,7 @@ const getTotalPages = () => {
       }
     }
     
-  }, [])
+  }, [clientes])
   const addNota = () => {
     // let value = this.facturaForm.value;
     // let value1 = this.notaForm.value;
@@ -1350,7 +1356,7 @@ const getTotalPages = () => {
       toastError('Preencha por favor todos os campos da nota!')
       return;
     }
-    if (tipoNota != "Nota de crédito (anulação)" && (!motivo || !tipoNota || !dataValidadeRetificacao)){
+    if (tipoNota != "Nota de crédito (anulação)" && (!motivo || !tipoNota || (factura?.tipoDocumento !== "Factura Recibo" &&!dataValidadeRetificacao))){
       toastError('Preencha por favor todos os campos da nota1!')
       return;
     }
@@ -3408,6 +3414,28 @@ const HeaderTemplate = () => {
     {!load &&
     factura && notaParam && !done && (
       <>
+      {notaParam && tipoDocumento === "Factura Recibo" && (
+          
+          <button
+                            className="btn btn-primary btn-label"
+                            style={{ fontSize: 14, borderRadius: 4 }}
+                            
+            onClick={addPayment}
+
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                fill="currentColor"
+                                class="bi bi-plus"
+                                viewBox="0 0 16 16"
+                            >
+                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+                            </svg>
+                            Adicionar pagamento
+                        </button>
+        )}
         {notaParam && <button
                             className="btn btn-success btn-label"
                             style={{ fontSize: 14, borderRadius: 4 }}
@@ -3829,7 +3857,11 @@ const HeaderTemplate = () => {
                             onClick={() => {
                 setOpenPayment(false);
                 setBypassRecibo(true);
-                saveDoc();
+                setBypassPagamento(true)
+                setLoad(true)
+                setTimeout(() => {
+                  factura?.id ? saveDoc(true) : createDoc(true);
+                }, 1000)
               }}
                         >
                             <svg
