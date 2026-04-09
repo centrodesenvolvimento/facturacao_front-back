@@ -396,7 +396,7 @@ let apiUrl1 =
         xml += `          <Quantity>${item?.quantidade}</Quantity>\n`;
         xml += `          <UnitOfMeasure>${item?.produto?.unidadeFull ? item?.produto?.unidadeFull?.abreviacao : "N/A"}</UnitOfMeasure>\n`;
         xml += `          <UnitPrice>${item?.preco}</UnitPrice>\n`;
-        xml += `          <TaxPointDate>${new Date(doc?.dataEmissao).toISOString().split("T")[0]}</TaxPointDate>\n`;
+        xml += `          <TaxPointDate>${new Date(doc?.dataEmissao).toIpSOString().split("T")[0]}</TaxPointDate>\n`;
         xml += `          <Description>${item?.produto?.descricao||""}</Description>\n`;
         xml += `          <ProductSerialNumber><SerialNumber>Desconhecido</SerialNumber></ProductSerialNumber>\n`;
                 if (parseFloat(`${item?.descontoFinal || 0}`) > 0) {
